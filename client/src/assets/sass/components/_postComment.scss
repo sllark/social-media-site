@@ -1,0 +1,147 @@
+.postComment {
+
+  margin-top: 0.8rem;
+
+  &__content {
+    display: flex;
+    //align-items: center;
+    position: relative;
+
+    &__text {
+
+      margin-left: 0.5rem;
+      background-color: $color-bg-light;
+      padding: 1rem;
+
+      max-width: 85%;
+
+      border-radius: 10px;
+
+      a {
+        font-size: 1.35rem;
+        text-decoration: underline;
+        color: $color-text-secondary;
+
+        &:hover {
+          color: $color-text;
+        }
+      }
+
+      pre {
+        margin-top: 0.7rem;
+        font-size: 1.56rem;
+        max-width: 100%;
+        white-space: pre-wrap;
+      }
+
+      position: relative;
+
+      &__likes{
+        position: absolute;
+        left: 97%;
+        bottom: 5%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: $color-container-bg;
+        border-radius: $container-border-radius;
+        box-shadow: $shadow;
+        padding: 0 0.5rem;
+
+        i{
+          background-image: url("../../img/reactIcons.png");
+          width: 20px;
+          height: 20px;
+          background-position: 0px -280px;
+          display: block;
+          transform: scale(0.7);
+        }
+
+        span{
+          font-size: 1.3rem;
+        }
+
+      }
+
+    }
+
+
+  }
+
+  &__reacts {
+
+    display: flex;
+
+    margin-top: 0.2rem;
+
+    margin-left: 4rem;
+
+    &__item {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      margin-right: 1.5rem;
+
+      cursor: pointer;
+
+
+      button,p {
+        color: $color-text;
+        font-weight: 400;
+        font-size: 1.4rem;
+      }
+
+
+      button{
+
+        p{
+
+          &:hover{
+            text-decoration: underline;
+
+          }
+        }
+
+
+      }
+
+
+
+    }
+
+
+  }
+
+
+  .line {
+
+    position: absolute;
+    width: 2px;
+    height: calc(100% - 3rem);
+    background-color: red;
+
+    top: 3.5rem;
+    left: 1.4rem;
+
+
+    &:after {
+
+      content: "";
+      display: block;
+
+      position: absolute;
+      width: 2px;
+      height: 100%;
+      background-color: yellow;
+
+      top: 100%;
+      left: 0;
+
+
+    }
+
+
+  }
+
+}

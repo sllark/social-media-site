@@ -1,0 +1,49 @@
+.person{
+  display: flex;
+  margin: 1rem 0 1.5rem;
+  border-radius: $container-border-radius;
+
+  &:hover,
+  &:focus{
+    text-decoration: none;
+    h4{
+      text-decoration: underline;
+    }
+  }
+
+  &:focus{
+    background-color: $color-bg-light;
+  }
+
+  img{
+    width: 8rem;
+    height: 8rem;
+    object-fit: cover;
+    border-radius: $container-border-radius;
+
+  }
+
+  &__text{
+    margin-left: 1rem;
+
+    display: flex;
+    flex-flow: column;
+    justify-content: space-between;
+
+
+    &__name{
+      font-size: 2rem;
+    }
+
+    &__bio,&__dob{
+      font-size: 1.7rem;
+      color: $color-text-secondary;
+    }
+
+
+
+  }
+
+
+
+}

@@ -1,0 +1,50 @@
+.imageUploader{
+
+
+  input{
+    position: absolute;
+    //visibility: hidden;
+    z-index: -1000;
+    pointer-events: none;
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
+  label{
+    display: inline-block;
+    svg{
+      border: 1px solid transparent;
+
+    }
+  }
+
+  input#fileUpload:focus + label  svg{
+    border: $input-border;
+    box-shadow: $shadow;
+  }
+  &__preview{
+
+    &__imageBox{
+      width: 20rem;
+      height: 20rem;
+      position: relative;
+
+      .cross{
+        right: unset;
+        left: 0.3rem;
+        top: 0.3rem!important;
+      }
+      img{
+        border: $input-border;
+        cursor: pointer;
+        width: auto;
+        height: auto;
+        max-height: 100%;
+        max-width: 100%;
+      }
+
+    }
+  }
+
+}

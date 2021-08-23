@@ -1,0 +1,64 @@
+.textEditor {
+
+  margin-bottom: 2rem;
+
+  &__input{
+
+    margin-left: 1rem;
+
+    width: calc(100% - 5rem);
+    justify-content: space-between;
+
+    &__box{
+
+      background-color: $color-bg-light;
+      border-radius: $container-border-radius;
+      padding: 1rem;
+
+      min-height: 3rem;
+
+      width: calc(100% - 4rem);
+
+
+      font-size: 1.6rem;
+      border: $input-border;
+
+      position: relative;
+
+      &:focus{
+        box-shadow: $shadow;
+      }
+
+
+      &__placeholder{
+        //position: absolute;
+        line-height: 1!important;
+        pointer-events: none;
+      }
+
+      & *{
+        line-height: 1.3;
+      }
+
+    }
+
+
+    button{
+
+      &:focus svg,
+      &:hover svg{
+        fill: $color-secondary;
+      }
+      svg{
+        width: 3rem;
+        height: 3rem;
+        transition: all 0.15s ease-in-out;
+      }
+
+    }
+
+
+  }
+
+
+}

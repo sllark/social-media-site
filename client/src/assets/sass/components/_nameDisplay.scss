@@ -1,0 +1,20 @@
+.nameDisplay{
+  display: flex;
+  align-items: center;
+
+  padding: 1.2rem 0;
+
+
+
+
+  p{
+    font-size: 1.8rem;
+    color: $color-primary;
+    font-weight: 400;
+    letter-spacing: 0.6px;
+    margin-left: 1.5rem;
+  }
+
+
+
+}

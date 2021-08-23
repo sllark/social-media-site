@@ -1,0 +1,78 @@
+form{
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
+  align-items: center;
+  width: 90%;
+
+
+
+
+  label{
+    width: 100%;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+
+    margin: 0.8rem 0;
+
+    p{
+      font-size: 1.4rem;
+      color: rgba($color-text,0.85);
+    }
+
+
+    span{
+      color: red;
+      font-size: 1.2rem;
+    }
+
+    .invalid{
+      border: 1px solid red;
+    }
+
+
+  }
+
+
+  .formGroup{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+
+    label{
+      width: 48%;
+    }
+
+  }
+
+
+
+}
+
+input,select,textarea{
+
+  width: 100%;
+  padding: 1.5rem;
+  font-size: 1.8rem;
+  margin: 0.5rem 0;
+
+  border-radius:$input-border-radius;
+  border: $input-border;
+
+
+  &:focus,
+  &:active{
+    border-color: rgba($color-primary, 0.7);
+    box-shadow: 0 4px 12px rgba(#000,0.1);
+  }
+
+  &::placeholder{
+    font-size: 1.4rem;
+    color: rgba($color-text,0.4);
+  }
+
+
+}

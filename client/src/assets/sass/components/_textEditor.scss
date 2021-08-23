@@ -1,0 +1,58 @@
+.textEditor {
+
+  margin-bottom: 2rem;
+
+  &__input{
+
+    margin-left: 1rem;
+
+    width: calc(100% - 5rem);
+    justify-content: space-between;
+
+    textarea{
+
+      resize: none;
+
+      background-color: $color-bg-light;
+      border: $input-border;
+      border-radius: $container-border-radius;
+
+      min-height: 6rem;
+      height: 100%;
+      width: calc(100% - 4rem);
+      font-size: 1.6rem;
+      padding: 1rem;
+      margin: 0;
+      line-height: 1.3;
+
+      &:focus{
+        box-shadow: $shadow;
+      }
+
+      &::-webkit-scrollbar-track {
+        //box-shadow: inset 0 0 5px grey;
+        //border-radius: 10px;
+        background: transparent;
+      }
+    }
+
+
+    button{
+
+      &:focus svg,
+      &:hover svg{
+        fill: $color-secondary;
+      }
+      svg{
+        width: 3rem;
+        height: 3rem;
+        transition: all 0.15s ease-in-out;
+      }
+
+    }
+
+
+  }
+
+
+}

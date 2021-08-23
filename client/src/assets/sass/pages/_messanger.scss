@@ -1,0 +1,73 @@
+.messanger{
+
+  --editor-height:12rem;
+
+
+  width: calc(100vw - ( #{$sidebar-width} * 2));
+  max-height: calc(100vh - #{$header-height});
+  height: calc(100vh - #{$header-height});
+  margin-top: $header-height;
+
+  overflow: hidden;
+
+  background-color: white;
+
+  display: flex;
+  flex-flow: column;
+  justify-content: space-between;
+
+  &__messagesCont{
+
+
+    display: flex;
+    flex-flow: column;
+    justify-content: flex-end;
+
+    height: calc(100% - var(--editor-height));
+
+    overflow-y: scroll;
+    overflow-x: hidden;
+    padding-top: 1rem;
+    position: relative;
+
+
+
+  }
+
+
+
+  &__editor{
+
+    height: var(--editor-height);
+    padding-top: 1rem;
+
+
+    .textEditor{
+      height: 80%;
+      margin-bottom: 0;
+
+      .textEditor__input{
+
+        align-items: flex-start;
+        height: 100%;
+
+      }
+
+
+    }
+
+    p{
+      height: 20%;
+      display: flex;
+      align-items: center;
+      font-size: 1.2rem;
+      margin-left: 4rem;
+    }
+
+  }
+
+
+
+
+
+}

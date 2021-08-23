@@ -1,0 +1,28 @@
+.createNewPost {
+
+  display: flex;
+
+  margin: 2rem 0;
+
+
+  &__front {
+
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+
+    padding: 1rem 0;
+    border-radius: 10px;
+
+    background-color: $color-container-bg;
+
+
+    input {
+      border-radius: 100px;
+      margin-left: 1.5rem;
+      width: 85%;
+      background-color: $color-bg-light;
+    }
+  }
+
+}

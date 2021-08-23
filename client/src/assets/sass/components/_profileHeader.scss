@@ -1,0 +1,129 @@
+.profileHeader {
+
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
+  align-items: center;
+
+  background-color: $color-container-bg;
+  margin-bottom: 2rem;
+  border-radius: $container-border-radius;
+
+  padding-bottom: 2rem;
+
+  &__photo {
+
+    width: 100%;
+    height: 30rem;
+
+    display: flex;
+
+
+    position: relative;
+
+    &__cover {
+
+      width: 100%;
+
+
+      img {
+        object-fit: cover;
+        width: 100%;
+        border-radius: 0 0 1rem 1rem;
+
+      }
+
+
+      &__gradient {
+
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(0deg, #bababa 0, #dddddd 25%, #ffffff 100%);
+        border-radius: 0 0 1rem 1rem;
+
+      }
+
+
+    }
+
+    &__profile {
+
+      //display: none;
+      width: 20rem;
+      height: 20rem;
+
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translate(-50%, 10%);
+
+
+      border: 0.5rem solid white;
+      border-radius: 100%;
+
+      img {
+        border-radius: 100%;
+        object-fit: cover;
+        width: 100%;
+      }
+
+
+    }
+
+
+    .profileAnimation {
+      animation: animateProfile 0.4s ease-out;
+    }
+
+  }
+
+
+  h3 {
+    margin-top: 2.5rem;
+    font-size: 3rem;
+    font-weight: bold;
+  }
+
+  h4 {
+    font-size: 2rem;
+    color: $color-text-secondary;
+    margin-top: 0.4rem;
+    text-align: center;
+  }
+
+
+  &__buttons {
+    margin-top: 1.5rem;
+    display: flex;
+
+    button,a {
+      border: 1px solid rgba($color-primary, 0.5);
+
+      &:hover {
+        background-color: rgba($color-primary, 0.9);
+      }
+
+
+      &:not(:last-of-type) {
+        margin-right: 1rem;
+      }
+
+
+    }
+  }
+
+}
+
+@keyframes animateProfile {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.985);
+  }
+  100% {
+    transform: scale(1);
+  }
+
+
+}

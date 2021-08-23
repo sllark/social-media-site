@@ -1,0 +1,417 @@
+import React from "react";
+
+
+import FillScreen from "../components/FillScreen";
+import Header from "../components/header/Header";
+import Sidebar from "../components/general/Sidebar";
+import SidebarOnline from "../components/general/SidebarOnline";
+import Message from "../components/messanger/Message";
+import TextEditor from "../components/general/TextEditor";
+
+import Loading from "../components/ui/Loading";
+import configs from "../assets/config/configs";
+
+
+class Messanger extends React.Component {
+
+
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            messages: [],
+            maxMessages: 0,
+            isLoading: false,
+            addedNewMsg: false,
+            addedOldMsg: false,
+            oldestDate: null, // oldestDate save date for loaded messages
+            newestDate: null, // newestDate save date for new messages
+            floatDate: null,
+            datesCount: 0,
+            otherUserTyping: false,
+            myProfile: {},
+            otherUserProfile: {}
+        }
+
+        this.socket = undefined;
+        this.messangerBodyRef = React.createRef();
+        this._isMounted = false;
+        this.prevScrollHeight = 0;
+        this.typingTimeout = undefined
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+
+        if (prevProps.socket === null) {
+            this.addSocketEvents();
+        }
+
+        if (prevState.messages.length === this.state.messages.length) return;
+
+        if (this.state.addedNewMsg || this.state.messages.length <= 15) {
+            this.moveScrollToBottom();
+            this.setState({addedNewMsg: false})
+        } else if (this.state.addedOldMsg) {
+
+            let ele = this.messangerBodyRef.current.querySelector('.messanger__messagesCont'),
+                currentHeight = ele.scrollHeight,
+                scrollTop = ele.scrollTop;
+
+            if (currentHeight > this.prevScrollHeight) {
+                ele.scrollTop = scrollTop + (currentHeight - this.prevScrollHeight);
+            }
+
+            this.setState({addedOldMsg: false})
+        }
+
+        this.prevScrollHeight = this.messangerBodyRef.current.querySelector('.messanger__messagesCont').scrollHeight;
+    }
+
+    async componentDidMount() {
+        this._isMounted = true
+        this.scrollEvent = this.messangerBodyRef.current.querySelector('.messanger__messagesCont').addEventListener('scroll', this.msgContScroll);
+
+        this.getMessagesCount()
+        this.getOldMessages();
+
+        if (this.props.socket) this.addSocketEvents();
+
+        let myID = await this.getProfileDetails(localStorage.getItem("userID"))
+        this.setState({myProfile: myID})
+        let otherID = await this.getProfileDetails(this.props.match.params.id)
+        this.setState({otherUserProfile: otherID})
+
+    }
+
+    addSocketEvents = () => {
+        this.props.socket.on('new chat message', (msg) => {
+            if (this.props.match.params.id === msg.from)
+                this.addNewMsg({value: msg.value});
+        })
+
+        this.props.socket.on('notifyTypingStart', (msg) => {
+            this.setState({otherUserTyping: true})
+        })
+        this.props.socket.on('notifyTypingStop', (msg) => {
+            this.setState({otherUserTyping: false})
+        })
+    }
+
+    getProfileDetails = (profileID) => {
+
+        if (profileID === "") return;
+
+        let link = configs.api_url + "/getProfileDetails?profileID=" + profileID;
+
+        return fetch(link, {
+            method: "GET",
+            headers: {
+                "content-type": "application/json",
+                "Authorization": localStorage.getItem("token")
+            }
+        })
+            .then(resp => resp.json())
+            .then(result => {
+
+                if (result.error)
+                    throw new Error(JSON.stringify(result));
+
+
+                return result.user;
+
+            })
+            .catch(error => {
+                // let errorObject = JSON.parse(error.message);
+                console.log(error);
+
+            })
+
+
+    }
+
+    msgContScroll = (e) => {
+        this.updateFloatingDate(e);
+        this.loadMore(e);
+    }
+
+    updateFloatingDate = (e) => {
+        let msgs = e.target.querySelectorAll('.message');
+        for (let i = 0; i < msgs.length; i++) {
+            let rects = msgs[i].getClientRects()[0];
+            if (rects.top - rects.height > 0) {
+                this.setState({floatDate: new Date(Number(msgs[i].dataset.date))})
+                break;
+            }
+        }
+    }
+
+    loadMore = (e) => {
+
+        if (e.target.scrollTop <= 1 && !this.state.isLoading && this.state.maxMessages !== this.state.messages.length
+        ) {
+            this.getOldMessages(this.state.messages.length - this.state.datesCount);
+        }
+    }
+
+    getMessagesCount = () => {
+
+
+        let link = configs.api_url + "/getMessagesCount?to=" + this.props.match.params.id + "&from=" + localStorage.getItem('userID');
+
+        fetch(link, {
+            method: "GET",
+            headers: {
+                "content-type": "application/json",
+                "Authorization": localStorage.getItem("token")
+            }
+        })
+            .then(resp => resp.json())
+            .then(result => {
+
+                if (result.error)
+                    throw new Error(JSON.stringify(result));
+
+                if (result.message === "success")
+                    this.setState({maxMessages: result.max})
+
+            })
+            .catch(error => {
+                // let errorObject = JSON.parse(error.message);
+                console.log(error);
+
+            })
+    }
+
+    getOldMessages = (msgsCount = 0) => {
+
+
+        this.setState({
+            isLoading: true
+        })
+
+        let link = configs.api_url + "/getMessages?to=" + this.props.match.params.id + "&from=" + localStorage.getItem('userID') + "&msgsCount=" + msgsCount;
+
+        fetch(link, {
+            method: "GET",
+            headers: {
+                "content-type": "application/json",
+                "Authorization": localStorage.getItem("token")
+            }
+        })
+            .then(resp => resp.json())
+            .then(result => {
+
+                if (result.error)
+                    throw new Error(JSON.stringify(result));
+
+
+                // console.log(result);
+
+
+                if (result.message === "success") {
+                    result.messages.forEach(msg => {
+                        this.addNewMsg(msg, msg.from === localStorage.getItem('userID'), false)
+                    })
+
+                }
+
+            })
+            .catch(error => {
+                // let errorObject = JSON.parse(error.message);
+                console.log(error);
+
+            })
+            .finally(() => {
+                if (!this._isMounted) return
+                this.setState({
+                    isLoading: false
+                })
+            })
+
+
+    }
+
+    postMsg = (value, clearValue) => {
+
+        let msgObj = {
+            value: value,
+            to: this.props.match.params.id,
+            from: localStorage.getItem('userID')
+        };
+
+        this.props.socket.emit('chat message', msgObj);
+        this.addNewMsg({value}, true);
+        clearValue();
+    }
+
+    addNewMsg = (msg, own = false, isNewMsg = true) => {
+        if (!this._isMounted) return
+
+        let msgObj = {
+            value: msg.value,
+            own: own,
+            createdAt: isNewMsg ? new Date().getTime() : new Date(msg.createdAt).getTime(),
+            isLast: this.state.messages.length + 1 === this.state.maxMessages
+        }
+
+        let isSameDay = true,
+            oldestDate,
+            newestDate,
+            msgInc = 1;
+
+
+        if (isNewMsg) {
+            newestDate = new Date(msgObj.createdAt)
+            isSameDay = datesAreOnSameDay(newestDate, this.state.newestDate || new Date(null))
+        } else {
+            oldestDate = new Date(msgObj.createdAt)
+            isSameDay = datesAreOnSameDay(oldestDate, this.state.oldestDate || new Date(null))
+
+            //if loading msg from db, then set first msg (most recent) date to newest date
+            if (!this.state.newestDate) newestDate = new Date(msgObj.createdAt)
+        }
+        // debugger
+
+        this.setState((prevState) => {
+
+            let messages = [...prevState.messages];
+
+            if (!this.state.oldestDate || !isSameDay) {
+                let dateObj = {
+                    type: 'date',
+                    date: new Date(msgObj.createdAt),
+                    value: msgObj.createdAt
+                };
+
+                // console.log('in', !this.state.oldestDate || !isSameDay, !this.state.oldestDate, !isSameDay)
+
+                isNewMsg ? messages.push(dateObj) : messages.splice(0, 0, dateObj);
+                msgInc = 2;
+            }
+
+            isNewMsg ? messages.push(msgObj) : messages.splice(1, 0, msgObj);
+
+            // debugger
+
+            return {
+                messages: messages,
+
+                // (we get max from server, total old messages) if new msg and new day then increment by 2 (add new msg and date) else if msg is old but day is not same increment max by 1 (add date in msgs array ) else if msg is old and day is same them keep the max
+                maxMessages: isNewMsg ? prevState.maxMessages + msgInc : msgInc > 1 ? prevState.maxMessages + 1 : prevState.maxMessages,
+
+                addedNewMsg: isNewMsg,
+                addedOldMsg: !isNewMsg,
+                oldestDate: oldestDate || prevState.oldestDate,
+                newestDate: newestDate || prevState.newestDate,
+                datesCount: msgInc > 1 ? prevState.datesCount + 1 : prevState.datesCount,
+            }
+
+
+        })
+
+    }
+
+    moveScrollToBottom = () => {
+        if (!this.messangerBodyRef.current) return;
+        let msgCont = this.messangerBodyRef.current.querySelector('.messanger__messagesCont');
+        msgCont.scrollTop = msgCont.scrollHeight - msgCont.clientHeight;
+    }
+
+    typingStart = () => {
+
+        if (this.typingTimeout !== undefined) clearTimeout(this.typingTimeout);
+        else {
+            this.props.socket.emit('typingStart', {
+                to: this.props.match.params.id,
+                from: localStorage.getItem('userID')
+            });
+        }
+
+        this.typingTimeout = setTimeout(this.typingStop, 400);
+    }
+
+    typingStop = () => {
+        this.props.socket.emit('typingStop', {
+            to: this.props.match.params.id,
+            from: localStorage.getItem('userID')
+        });
+
+        clearTimeout(this.typingTimeout)
+        this.typingTimeout = undefined;
+    }
+
+
+    render() {
+
+        return (
+            <FillScreen class="bg-light">
+
+                <Header/>
+
+                <div className="home__container d-flex flex-row justify-center">
+
+
+                    <Sidebar/>
+
+
+                    <div className="messanger" ref={this.messangerBodyRef}>
+
+                        <div className="messanger__messagesCont">
+
+                            {
+                                this.state.isLoading ? <Loading/> : false
+                            }
+                            {this.state.messages.length > 0 && this.state.floatDate ?
+                                <div className="message__day dateFloat">
+                                    {this.state.floatDate.toLocaleDateString(undefined, {
+                                        day: "numeric",
+                                        month: "long",
+                                        year: "numeric"
+                                    })}
+                                </div>
+                                : null}
+                            {
+                                this.state.messages.map((msg, index) => {
+                                    return <Message msg={msg}
+                                                    key={msg.value + index}
+                                                    profile={msg.own ? this.state.myProfile : this.state.otherUserProfile}/>;
+                                })
+                            }
+                            <div className="scrollBottom"/>
+                        </div>
+
+                        <div className="messanger__editor">
+
+                            <TextEditor
+                                post={this.postMsg} placeholder="Type Message..."
+                                onKeyPress={this.typingStart}
+                                profile={this.state.myProfile}
+                            />
+
+                            <p>
+                                {this.state.otherUserTyping ? ` ${this.state.otherUserProfile.firstName} is typing...` : ""}
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <SidebarOnline/>
+
+                </div>
+
+            </FillScreen>
+        );
+
+    }
+
+}
+
+
+const datesAreOnSameDay = (first, second) =>
+    first.getFullYear() === second.getFullYear() &&
+    first.getMonth() === second.getMonth() &&
+    first.getDate() === second.getDate();
+
+
+export default Messanger;
