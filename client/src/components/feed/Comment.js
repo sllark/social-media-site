@@ -1,53 +1,43 @@
 import React from "react";
 import {Link} from "react-router-dom";
-
-import configs from "../../assets/config/configs";
 import Avatar from "../profile/Avatar";
 import timeDifference from "../../helper/timeDiff";
 
+import axios from "../../helper/axios";
+import configs from "../../assets/config/configs";
 
 
 function Comment(props) {
 
 
     const like = () => {
-
-        let link = configs.api_url+"/likeComment";
-
-        fetch(link, {
-            method: "POST",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            },
-            body: JSON.stringify({
+        axios.post(
+            "/likeComment",
+            JSON.stringify({
                 commentID: props.ele._id,
-            })
-        })
-            .then(resp => resp.json())
+            }))
             .then(result => {
-
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
-                props.updateComment(props.ele._id,result.commentLikes)
-                console.log(result);
-
+                props.updateComment(props.ele._id, result.data.commentLikes)
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
-
             })
 
     }
+
+    let profilePic = props.ele?.person?.profilePicture || "";
+    if (profilePic)
+        profilePic = configs.api_url + "/images/" + profilePic;
 
     return (
         <div className={"postComment" + (props.indent ? (" indent-" + props.indent) : "")}>
 
             <div className="postComment__content">
 
-                <Avatar/>
+
+                <Link to={"/profile/" + props.ele.person._id || ""}>
+                    <Avatar url={profilePic}/>
+                </Link>
 
                 {/*<div className="line"></div>*/}
                 <div className="postComment__content__text">
@@ -60,7 +50,7 @@ function Comment(props) {
                     </pre>
 
                     {
-                        props.ele.likes.count>0 ?
+                        props.ele.likes.count > 0 ?
                             <div className="postComment__content__text__likes">
                                 <i className="like"/>
                                 <span>{props.ele.likes.count}</span>

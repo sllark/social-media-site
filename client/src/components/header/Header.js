@@ -10,6 +10,7 @@ import {ReactComponent as LogoutIcon} from '../../assets/img/svg/exit.svg'
 import {ReactComponent as NotificationIcon} from '../../assets/img/svg/bell.svg'
 import {ReactComponent as SearchIcon} from '../../assets/img/svg/search.svg'
 import configs from "../../assets/config/configs";
+import axios from "../../helper/axios";
 
 
 function Header(props) {
@@ -31,7 +32,7 @@ function Header(props) {
             document.removeEventListener('keyup', searchOnEnter)
         };
 
-    })
+    }, [])
 
     useOutsideAlerter(wrapperRef, () => {
         setNotifiPopup(false)
@@ -50,30 +51,13 @@ function Header(props) {
 
     const getNotifications = () => {
 
-        let link = configs.api_url+"/getNotifications"
-
-        fetch(link, {
-            method: "GET",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            }
-        })
-            .then(resp => resp.json())
+        axios.get("/getNotifications")
             .then(result => {
-
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
-                setNotifications(result.notifications)
-
+                setNotifications(result.data.notifications)
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
-
             })
-
 
     }
 

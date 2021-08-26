@@ -6,6 +6,7 @@ import configs from "../assets/config/configs";
 import FillScreen from "../components/FillScreen";
 import homeImage from "../assets/img/homeImage.png"
 import * as validate from "../helper/formValidation";
+import axios from "../helper/axios";
 
 
 class Home extends React.Component {
@@ -97,28 +98,26 @@ class Home extends React.Component {
             form: form
         })
 
-        console.log(isFormValid);
-
 
         if (!isFormValid) return;
 
         let link = configs.api_url;
 
-        fetch(link + "/signup", {
-            method: "POST",
+        axios({
+            method: 'post',
+            url: link + "/signup",
             headers: {
                 "content-type": "application/json"
             },
-            body: JSON.stringify({
+            data: {
                 firstName: form.firstName.value,
                 lastName: form.lastName.value,
                 gender: form.gender.value,
                 email: form.email.value,
                 dob: form.dob.value,
                 password: form.password.value,
-            })
+            }
         })
-            .then(resp => resp.json())
             .then(result => {
                 console.log(result);
             })

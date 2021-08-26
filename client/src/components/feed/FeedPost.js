@@ -13,7 +13,7 @@ import ImageModal from "../ui/ImageModal";
 import timeDifference from "../../helper/timeDiff";
 import {Link} from "react-router-dom";
 import configs from "../../assets/config/configs";
-
+import axios from "../../helper/axios";
 
 class FeedPost extends React.Component {
 
@@ -38,8 +38,6 @@ class FeedPost extends React.Component {
     likeClick = (e) => {
 
 
-        console.log(this.props.post)
-
         this.setState(
             (prevState) => {
                 return {
@@ -49,39 +47,18 @@ class FeedPost extends React.Component {
             }
         )
 
-        let link = configs.api_url + "/likePost";
-
-
-        fetch(link, {
-            method: "POST",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            },
-            body: JSON.stringify({
+        axios.post(
+            "/likePost",
+            JSON.stringify({
                 postID: this.props.post._id,
-            })
-        })
-            .then(resp => resp.json())
+            }))
             .then(result => {
-
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
-                console.log(result);
-
-
+                console.log(result.data);
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
+            })
 
-            })
-            .finally(() => {
-                this.setState({
-                    isLoading: false
-                })
-            })
 
     }
 
@@ -114,78 +91,48 @@ class FeedPost extends React.Component {
     postComment = (value, clearValues) => {
 
 
-        let link = configs.api_url + "/commentPost";
-
-        fetch(link, {
-            method: "POST",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            },
-            body: JSON.stringify({
+        axios.post(
+            "/commentPost",
+            JSON.stringify({
                 postID: this.props.post._id,
                 value: value
-            })
-        })
-            .then(resp => resp.json())
+            }))
             .then(result => {
 
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
                 let comments = [...this.state.comments];
-
-                comments.splice(0, 0, result.comment)
+                comments.splice(0, 0, result.data.comment)
                 this.setState({
                     comments
                 })
 
                 clearValues()
-
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
-
             })
-
 
     }
 
 
     deletePost = () => {
 
-        let link = configs.api_url+"/deletePost";
         let postID = this.props.post._id;
 
-        fetch(link, {
-            method: "POST",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            },
-            body: JSON.stringify({
+        axios.post(
+            "/deletePost",
+            JSON.stringify({
                 postID: postID,
-            })
-        })
-            .then(resp => resp.json())
+            }))
             .then(result => {
 
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
 
-                console.log(result);
-                console.log(result.message === "success");
-
-                if (result.message === "success") {
+                if (result.data.message === "success") {
                     this.props.removePost(postID);
                 }
 
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
-
             })
 
 
@@ -214,7 +161,6 @@ class FeedPost extends React.Component {
 
         let post = this.props.post;
 
-
         return (
             <>
                 <div className="feedPost">
@@ -225,7 +171,7 @@ class FeedPost extends React.Component {
                             <Avatar
                                 url={
                                     post.user.profilePicture ?
-                                        (configs.api_url+"/images/" + post.user.profilePicture) : null
+                                        (configs.api_url + "/images/" + post.user.profilePicture) : null
                                 }
                                 roundAvatar={true}
                             />
@@ -254,7 +200,7 @@ class FeedPost extends React.Component {
                         {
                             post.postImage ?
                                 <img
-                                    src={configs.api_url+"/images/" + post.postImage}
+                                    src={configs.api_url + "/images/" + post.postImage}
                                     alt=""
                                     onClick={this.showImage}
                                 />
@@ -290,13 +236,13 @@ class FeedPost extends React.Component {
                             : null
                     }
 
-                    <div className="feedPost__reacts">
-
+                    <div className={"feedPost__reacts"}>
 
                         <div
                             className={
                                 "feedPost__reacts__item" +
-                                (this.state.hasLiked ? " marked" : "")
+                                (this.state.hasLiked ? " marked" : "") +
+                                (post.user._id === localStorage.getItem('userID') ? " childWith50" : "")
                             }
                             onClick={this.likeClick}
                         >
@@ -308,7 +254,8 @@ class FeedPost extends React.Component {
 
                         <div className={
                             "feedPost__reacts__item" +
-                            (this.props.commentsNum < this.state.commentsNum ? " marked" : "")
+                            (this.props.commentsNum < this.state.commentsNum ? " marked" : "") +
+                            (post.user._id === localStorage.getItem('userID') ? " childWith50" : "")
                         }
                              onClick={this.commentClick}>
                             <i className="comment"/>
@@ -317,13 +264,17 @@ class FeedPost extends React.Component {
                             </p>
                         </div>
 
-                        <div className="feedPost__reacts__item">
-                            <i className="share"/>
-                            <p className="reactNumber">{""}</p>
-                            <p>
-                                Share
-                            </p>
-                        </div>
+                        {
+                            post.user._id !== localStorage.getItem('userID') ?
+                                <div className="feedPost__reacts__item">
+                                    <i className="share"/>
+                                    <p className="reactNumber">{""}</p>
+                                    <p>
+                                        Share
+                                    </p>
+                                </div>
+                                : null
+                        }
 
 
                     </div>
@@ -334,7 +285,7 @@ class FeedPost extends React.Component {
                         (!this.state.showComments ? " hideComments" : "")
                     }>
 
-                        <TextEditor post={this.postComment} placeholder="Write a comment..."/>
+                        <TextEditor post={this.postComment} profile={post.user} placeholder="Write a comment..."/>
 
 
                         {
@@ -371,7 +322,7 @@ class FeedPost extends React.Component {
                         <ImageModal
                             showModal={this.state.showImageModal}
                             changeShowModal={option => this.setState({showImageModal: option})}
-                            postImage={configs.api_url+"/images/" + post.postImage}
+                            postImage={configs.api_url + "/images/" + post.postImage}
                         />
                         : null
                 }

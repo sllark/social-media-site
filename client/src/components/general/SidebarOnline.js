@@ -1,43 +1,21 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import SidebarOnlineItem from "./SidebarOnlineItem";
+import axios from "../../helper/axios";
 
 function Sidebar(props) {
 
-    let items = [
-        {
-            name: "AbdulRehman",
-            profileUrl: "",
-            profilePicUrl: "",
-        },
-        {
-            name: "AbdulRehman",
-            profileUrl: "",
-            profilePicUrl: "",
-        },
-        {
-            name: "AbdulRehman",
-            profileUrl: "",
-            profilePicUrl: "",
-        },
-        {
-            name: "AbdulRehman",
-            profileUrl: "",
-            profilePicUrl: "",
-        },
-        {
-            name: "AbdulRehman",
-            profileUrl: "",
-            profilePicUrl: "",
-        },
-        {
-            name: "AbdulRehman",
-            profileUrl: "",
-            profilePicUrl: "",
-        }
-    ]
+    const [sidebar, setSidebar] = useState(false)
+    const [sidebarItems, setSidebarItems] = useState([])
 
-    const [sidebar, changeSidebar] = useState(false)
-    const [sidebarItems, changeSidebarItems] = useState(items)
+    useEffect(() => {
+
+        axios.get("/getOnlineFriends")
+            .then(result => {
+                console.log(result);
+                setSidebarItems(result.data.friends);
+            })
+
+    }, [])
 
     return (
 
@@ -46,8 +24,8 @@ function Sidebar(props) {
                 "sidebar sidebarOnline" +
                 (sidebar ? " scrollbarVisible" : "")
             }
-            onMouseEnter={event => changeSidebar(true)}
-            onMouseLeave={event => changeSidebar(false)}
+            onMouseEnter={event => setSidebar(true)}
+            onMouseLeave={event => setSidebar(false)}
         >
 
             <div className="sidebar__container">
@@ -56,7 +34,7 @@ function Sidebar(props) {
 
                 {sidebarItems.map((item, index) => {
                     return <SidebarOnlineItem
-                        key={item.name + index}
+                        key={item._id}
                         item={item}/>
                 })}
 

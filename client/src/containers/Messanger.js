@@ -9,7 +9,7 @@ import Message from "../components/messanger/Message";
 import TextEditor from "../components/general/TextEditor";
 
 import Loading from "../components/ui/Loading";
-import configs from "../assets/config/configs";
+import axios from "../helper/axios";
 
 
 class Messanger extends React.Component {
@@ -81,6 +81,11 @@ class Messanger extends React.Component {
         let otherID = await this.getProfileDetails(this.props.match.params.id)
         this.setState({otherUserProfile: otherID})
 
+
+    }
+
+    componentWillUnmount() {
+        this.messangerBodyRef.current.querySelector('.messanger__messagesCont').removeEventListener('scroll', this.msgContScroll)
     }
 
     addSocketEvents = () => {
@@ -101,31 +106,20 @@ class Messanger extends React.Component {
 
         if (profileID === "") return;
 
-        let link = configs.api_url + "/getProfileDetails?profileID=" + profileID;
 
-        return fetch(link, {
-            method: "GET",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            }
-        })
-            .then(resp => resp.json())
+        return axios.get(
+            "/getProfileDetails",
+            {
+                params: {
+                    profileID: profileID
+                }
+            })
             .then(result => {
-
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
-
-                return result.user;
-
+                return result.data.user;
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
-
             })
-
 
     }
 
@@ -155,31 +149,21 @@ class Messanger extends React.Component {
 
     getMessagesCount = () => {
 
-
-        let link = configs.api_url + "/getMessagesCount?to=" + this.props.match.params.id + "&from=" + localStorage.getItem('userID');
-
-        fetch(link, {
-            method: "GET",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            }
-        })
-            .then(resp => resp.json())
+        axios.get(
+            "/getMessagesCount",
+            {
+                params: {
+                    to: this.props.match.params.id,
+                    from: localStorage.getItem('userID')
+                }
+            })
             .then(result => {
-
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
-                if (result.message === "success")
-                    this.setState({maxMessages: result.max})
-
+                if (result.data.message === "success") this.setState({maxMessages: result.data.max})
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
-
             })
+
     }
 
     getOldMessages = (msgsCount = 0) => {
@@ -189,37 +173,22 @@ class Messanger extends React.Component {
             isLoading: true
         })
 
-        let link = configs.api_url + "/getMessages?to=" + this.props.match.params.id + "&from=" + localStorage.getItem('userID') + "&msgsCount=" + msgsCount;
-
-        fetch(link, {
-            method: "GET",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            }
-        })
-            .then(resp => resp.json())
-            .then(result => {
-
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
-
-                // console.log(result);
-
-
-                if (result.message === "success") {
-                    result.messages.forEach(msg => {
-                        this.addNewMsg(msg, msg.from === localStorage.getItem('userID'), false)
-                    })
-
+        axios.get(
+            "/getMessages",
+            {
+                params: {
+                    to: this.props.match.params.id,
+                    from: localStorage.getItem('userID'),
+                    msgsCount: msgsCount
                 }
-
+            })
+            .then(result => {
+                result.data.messages.forEach(msg => {
+                    this.addNewMsg(msg, msg.from === localStorage.getItem('userID'), false)
+                })
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
-
             })
             .finally(() => {
                 if (!this._isMounted) return
@@ -263,6 +232,8 @@ class Messanger extends React.Component {
         if (isNewMsg) {
             newestDate = new Date(msgObj.createdAt)
             isSameDay = datesAreOnSameDay(newestDate, this.state.newestDate || new Date(null))
+
+            if (!this.state.oldestDate) oldestDate = new Date(msgObj.createdAt)
         } else {
             oldestDate = new Date(msgObj.createdAt)
             isSameDay = datesAreOnSameDay(oldestDate, this.state.oldestDate || new Date(null))

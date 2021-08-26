@@ -8,7 +8,7 @@ import FeedPost from "../components/feed/FeedPost";
 import Sidebar from "../components/general/Sidebar";
 import SidebarOnline from "../components/general/SidebarOnline";
 import Loading from "../components/ui/Loading";
-import configs from "../assets/config/configs";
+import axios from "../helper/axios";
 
 class Feed extends React.Component {
 
@@ -18,7 +18,6 @@ class Feed extends React.Component {
 
         this.state = {
             posts: [],
-            nextPageLoad: 1,
             maxPost: 1,
             isLoading: false
         }
@@ -35,6 +34,10 @@ class Feed extends React.Component {
 
     }
 
+    componentWillUnmount() {
+        window.removeEventListener('scroll', this.loadMore);
+    }
+
     loadMore = (e) => {
 
         if (
@@ -42,50 +45,37 @@ class Feed extends React.Component {
             && this.state.maxPost !== this.state.posts.length
             && !this.state.isLoading
         ) {
-            this.loadFeedPosts(this.state.nextPageLoad);
+            this.loadFeedPosts();
         }
     }
 
-    loadFeedPosts = (pageNum = 1) => {
+    loadFeedPosts = () => {
 
 
         this.setState({
             isLoading: true
         })
 
-        let link = configs.api_url+"/getFeedPosts?pageNum=" + pageNum;
-
-        fetch(link, {
-            method: "GET",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            }
-        })
-            .then(resp => resp.json())
+        axios.get(
+            "/getFeedPosts",
+            {
+                params: {
+                    postsLoaded: this.state.posts.length
+                }
+            })
             .then(result => {
 
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
-
-                console.log(result)
-
-
-                if (result.message === "success") {
+                if (result.data.message === "success") {
                     this.setState((prevState) => {
                         return {
-                            posts: [...prevState.posts, ...result.posts],
-                            nextPageLoad: prevState.nextPageLoad + 1,
+                            posts: [...prevState.posts, ...result.data.posts],
                         }
                     })
                 }
 
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
-
             })
             .finally(() => {
                 this.setState({
@@ -96,32 +86,15 @@ class Feed extends React.Component {
     }
 
 
-    getFeedPostsCount = (pageNum = 1) => {
+    getFeedPostsCount = () => {
 
-
-        let link = configs.api_url+"/getFeedPostsCount";
-
-        fetch(link, {
-            method: "GET",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            }
-        })
-            .then(resp => resp.json())
+        axios.get("/getFeedPostsCount")
             .then(result => {
-
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
-                if (result.message === "success")
-                    this.setState({maxPost: result.max})
+                if (result.data.message === "success") this.setState({maxPost: result.data.max})
 
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
-
             })
     }
 
@@ -148,8 +121,6 @@ class Feed extends React.Component {
 
         posts.splice(postIndex, 1);
 
-        console.log(postIndex)
-        console.log(posts)
         this.setState(prevState => {
             return {
                 posts,
@@ -162,7 +133,6 @@ class Feed extends React.Component {
 
     render() {
 
-        // console.log(this.props.token)
 
         return (
             <FillScreen class="bg-light">

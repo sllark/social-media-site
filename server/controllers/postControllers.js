@@ -9,11 +9,11 @@ const CommentBy = require('../model/CommentBy');
 const Notification = require('../model/Notification');
 const Message = require('../model/Message');
 
-
+const {llenAsync} = require('../helper/redis')
 const getChatID = require('../helper/getChatID');
 
 
-exports.createPost = (req, res, next) => {
+exports.createPost = async (req, res, next) => {
 
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
@@ -43,48 +43,30 @@ exports.createPost = (req, res, next) => {
     })
 
 
-    let saved;
+    newPost = await newPost.save()
 
-    newPost.save()
-        .then(savedPost => {
-            saved = savedPost;
+    let user = await User.findById(req.user.userID);
+    user.posts.push(newPost._id);
+    await user.save();
+    await newPost.populate({
+        path: 'user',
+        model: 'User',
+        select: "firstName lastName profilePicture"
+    }).execPopulate();
 
-            return User.findById(req.user.userID);
-        })
-        .then(user => {
-            user.posts.push(saved._id);
-            return user.save();
 
-        })
-        .then(user => {
-
-            return saved.populate({
-                path: 'user',
-                model: 'User'
-            }).execPopulate();
-
-        })
-
-        .then(post => {
-
-            res.status(200).json({
-                "message": "success",
-                post: post
-            });
-
-        })
-        .catch(err => {
-            if (!err.statusCode)
-                err.statusCode = 500;
-            next(err);
-        })
+    res.status(200).json({
+        "message": "success",
+        post: newPost
+    });
 
 
 }
 
 
-exports.deletePost = (req, res, next) => {
+exports.deletePost = async (req, res, next) => {
 
+    //TODO: delete image of the related post
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
         let errors = validation.array();
@@ -100,46 +82,27 @@ exports.deletePost = (req, res, next) => {
     let postID = req.body.postID;
 
 
-    Post.findById(postID)
-        .then(post => {
+    let post = await Post.findById(postID)
 
-            if (post.user.toString() === req.user.userID.toString()) {
+    if (post.user.toString() === req.user.userID.toString()) {
 
-                User.findById(post.user)
-                    .then(user => {
-                        let index = user.posts.findIndex((post) => post.toString() === postID.toString())
+        let user = await User.findById(post.user)
+        let index = user.posts.findIndex((post) => post.toString() === postID.toString())
 
-                        user.posts.splice(index, 1)
-                        return user.save()
-                    })
-                    .then(user => {
-                        return post.delete()
-                    })
-                    .then(query => {
-                        res.status(200).json({
-                            "message": "success",
-                        });
-                    })
-                    .catch(err => {
-                        if (!err.statusCode)
-                            err.statusCode = 500;
-                        next(err);
-                    })
+        user.posts.splice(index, 1)
+        await user.save()
+        await post.delete()
 
-            } else {
-
-                res.status(500).json({
-                    "message": "failed",
-                });
-
-            }
-        })
-        .catch(err => {
-            if (!err.statusCode)
-                err.statusCode = 500;
-            next(err);
+        return res.status(200).json({
+            "message": "success",
         })
 
+    }
+
+
+    res.status(500).json({
+        "message": "failed",
+    });
 
 }
 
@@ -148,7 +111,7 @@ exports.getPosts = async (req, res, next) => {
 
 
     let max = 5,
-        skip = ((Number(req.query.pageNum) - 1) * max),
+        skip = Number(req.query.postsLoaded),
         maxPost = 0;
 
 
@@ -204,7 +167,7 @@ exports.getUser = async (req, res, next) => {
     let userID = req.user.userID
 
     let user = await User.findById(req.query.profileID)
-    // .select("firstName lastName profilePicture coverPicture bio dob gender friends friendRequests")
+        .select("firstName lastName profilePicture coverPicture bio dob gender friends friendRequests isOnline")
 
 
     user = await user.populate({
@@ -219,23 +182,12 @@ exports.getUser = async (req, res, next) => {
         friendReqIndex = updatedUser.friendRequests.findIndex(id => id.toString() === userID.toString());
 
 
-    // delete updatedUser.password;
-    // delete updatedUser.posts;
-    // delete updatedUser.email;
-    // delete updatedUser.friendRequests;
-    // delete updatedUser.friendRequestsSent;
-    // delete updatedUser.friends;
+    delete updatedUser.friendRequests;
+    delete updatedUser.friends;
 
     updatedUser.isMyFriend = myFriendIndex >= 0;
     updatedUser.reqSent = friendReqIndex >= 0;
 
-
-    // updatedUser = await updatedUser.populate({
-    //     path: 'posts.comments.by.person',
-    //     model: 'User',
-    //     select: {'firstName':1, 'lastName':1}
-    // }).execPopulate()
-    //
 
     res.status(200).json({
         "message": "success",
@@ -398,7 +350,7 @@ exports.commentPost = async (req, res, next) => {
         select: ['firstName', 'lastName']
     }).execPopulate()
 
- res.status(200).json({
+    res.status(200).json({
         "message": "success",
         comment: newComment
     })
@@ -426,6 +378,7 @@ exports.likeComment = async (req, res, next) => {
         comment.markModified('comments');
         await comment.save();
 
+        // if this like is not by user on its own comment (no notification would be there in this case)
         if (userID.toString() !== comment.person.toString()) {
 
             //removing notification of the like
@@ -448,7 +401,6 @@ exports.likeComment = async (req, res, next) => {
         return res.status(200).json({
             "message": "success",
             commentLikes: comment.likes
-
         });
 
     }
@@ -499,7 +451,7 @@ exports.likeComment = async (req, res, next) => {
 exports.getProfileDetails = async (req, res, next) => {
 
     let user = await User.findById(req.query.profileID)
-    .select("firstName lastName profilePicture")
+        .select("firstName lastName profilePicture")
 
     res.status(200).json({
         "message": "success",
@@ -508,7 +460,7 @@ exports.getProfileDetails = async (req, res, next) => {
 }
 
 
-exports.updateProfilePic = (req, res, next) => {
+exports.updateProfilePic = async (req, res, next) => {
 
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
@@ -528,24 +480,44 @@ exports.updateProfilePic = (req, res, next) => {
             "message": "failed",
         });
 
-    User.findById(req.user.userID)
-        .then(user => {
-            user.profilePicture = postImage;
-            return user.save();
-        })
-        .then(user => {
+    let user = await User.findById(req.user.userID)
+    user.profilePicture = postImage;
 
-            res.status(200).json({
-                "message": "success",
-                profilePicture: postImage
-            });
+    let newPost = new Post({
+        postText: `${user.firstName} ${user.lastName} updated Profile Picture.`,
+        postImage,
+        user: req.user.userID,
+        likes: {
+            count: 0,
+            by: []
+        },
+        comments: {
+            count: 0,
+            by: []
+        }
+    })
 
-        })
+    user.posts.push(newPost._id);
+    await user.save();
+    await newPost.save()
+
+    await newPost.populate({
+        path: 'user',
+        model: 'User',
+        select: "firstName lastName profilePicture"
+    }).execPopulate();
+
+
+    res.status(200).json({
+        "message": "success",
+        profilePicture: postImage,
+        post: newPost
+    });
 
 }
 
 
-exports.updateCoverPic = (req, res, next) => {
+exports.updateCoverPic = async (req, res, next) => {
 
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
@@ -565,24 +537,47 @@ exports.updateCoverPic = (req, res, next) => {
             "message": "failed",
         });
 
-    User.findById(req.user.userID)
-        .then(user => {
-            user.coverPicture = postImage;
-            return user.save();
-        })
-        .then(user => {
+    let user = await User.findById(req.user.userID)
+    user.coverPicture = postImage;
 
-            res.status(200).json({
-                "message": "success",
-                coverPicture: postImage
-            });
 
-        })
+    let newPost = new Post({
+        postText: `${user.firstName} ${user.lastName} updated Cover Picture.`,
+        postImage,
+        user: req.user.userID,
+        likes: {
+            count: 0,
+            by: []
+        },
+        comments: {
+            count: 0,
+            by: []
+        }
+    })
+
+
+    user.posts.push(newPost._id);
+    await user.save();
+
+    await newPost.save()
+
+    await newPost.populate({
+        path: 'user',
+        model: 'User',
+        select: "firstName lastName profilePicture"
+    }).execPopulate();
+
+
+    res.status(200).json({
+        "message": "success",
+        coverPicture: postImage,
+        post: newPost
+    });
 
 }
 
 
-exports.addBio = (req, res, next) => {
+exports.addBio = async (req, res, next) => {
 
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
@@ -594,28 +589,17 @@ exports.addBio = (req, res, next) => {
         throw error;
     }
 
-    console.log(req);
     let bio = req.body.bio;
 
-    console.log(req.body);
-    console.log(bio);
 
+    let user = await User.findById(req.user.userID)
+    user.bio = bio;
+    await user.save();
 
-    User.findById(req.user.userID)
-        .then(user => {
-            user.bio = bio;
-            return user.save();
-        })
-        .then(user => {
-            console.log(user);
-
-
-            res.status(200).json({
-                "message": "success 122",
-                bio: user.bio,
-            });
-
-        })
+    res.status(200).json({
+        "message": "success 122",
+        bio: user.bio,
+    });
 
 }
 
@@ -904,7 +888,7 @@ exports.getFeedPosts = async (req, res, next) => {
 
 
     let max = 5,
-        skip = ((Number(req.query.pageNum) - 1) * max);
+        skip = Number(req.query.postsLoaded);
 
     let user = await User.findById(req.user.userID)
     let posts = await Post.find(
@@ -960,12 +944,12 @@ exports.getFeedPostsCount = async (req, res, next) => {
 exports.getMessages = async (req, res, next) => {
     //TODO: req.user.userID === req.query.from otherwise throw unauth task error
 
-    let chatID = getChatID(req.query.to,req.query.from);
+    let chatID = getChatID(req.query.to, req.query.from);
     let max = 15,
         skip = Number(req.query.msgsCount);
 
     let messages = await Message.find(
-        {chatID:chatID}
+        {chatID: chatID}
     )
         .sort({_id: -1})
         .limit(max)
@@ -985,17 +969,41 @@ exports.getMessages = async (req, res, next) => {
 }
 
 
-
 exports.getMessagesCount = async (req, res, next) => {
 
     //TODO: req.user.userID === req.query.from otherwise throw unauth task error
 
-    let chatID = getChatID(req.query.to,req.query.from);
-    let max = await Message.countDocuments({chatID:chatID});
+    let chatID = getChatID(req.query.to, req.query.from);
+    let max = await Message.countDocuments({chatID: chatID});
 
     res.status(200).json({
         "message": "success",
         max: max
+    });
+
+}
+
+exports.getOnlineFriends = async (req, res, next) => {
+
+    let {userID} = req.user;
+
+    let userFiends = await User.findById(userID)
+        .select("friends")
+        .populate({
+            path: 'friends',
+            options: {
+                limit: 50,
+            },
+            match: {isOnline: true},
+            select: "firstName lastName profilePicture",
+            model: "User"
+        })
+
+
+
+    res.status(200).json({
+        "message": "success",
+        friends: userFiends.friends
     });
 
 }

@@ -20,7 +20,7 @@ function Sidebar(props) {
                     </p>
                 </Link>
 
-                <Link to="/profile" className="sidebar__item">
+                <Link to={"/profile/"+localStorage.getItem("userID")} className="sidebar__item">
                     <img src={personAvatar} alt="personAvatar"/>
                     <p>
                         Profile

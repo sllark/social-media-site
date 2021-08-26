@@ -1,5 +1,5 @@
 import React from "react";
-import avatar from '../../assets/img/personAvatar.svg'
+import avatar from '../../assets/img/personAvatar.png'
 
 
 function Avatar(props) {
@@ -13,12 +13,15 @@ function Avatar(props) {
     let classes = "avatar";
     classes += " avatar-" + type
 
-    if (props.roundAvatar)
-        classes+=" b-radius-100"
+    // if (props.roundAvatar)
+    //     classes+=" b-radius-100"
+
+
     return (
         <div className={classes}>
             <img src={avatarSrc} alt={props.alt || "avatr"}/>
             {props.isActive ? <span className="online"/> : null}
+            <div className="avatar__bgOverlay"/>
         </div>
     );
 

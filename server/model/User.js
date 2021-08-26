@@ -29,6 +29,10 @@ const User = new Schema({
         type: String,
         required: true
     },
+    isOnline: {
+        type: Boolean,
+        default:false
+    },
     posts: [
         {
             type: Schema.Types.ObjectId,

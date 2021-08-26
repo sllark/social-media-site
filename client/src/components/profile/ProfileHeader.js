@@ -9,6 +9,7 @@ import AddBio from "./AddBio";
 
 import dataURLtoFile from "../../helper/dataURLtoFile";
 import configs from "../../assets/config/configs";
+import axios from "axios";
 
 function ProfileHeader(props) {
 
@@ -87,9 +88,9 @@ function ProfileHeader(props) {
 
         let link = configs.api_url;
 
-        let path = "updateProfilePic";
+        let path = "/updateProfilePic";
 
-        if (imageType === "cover") path = "updateCoverPic";
+        if (imageType === "cover") path = "/updateCoverPic";
 
 
         file = dataURLtoFile(imgData, originalName);
@@ -97,31 +98,21 @@ function ProfileHeader(props) {
         data.append('imageFile', file);
 
 
-        fetch(link + path, {
-            method: "POST",
+        axios({
+            method: 'post',
+            url: link + path,
             headers: {
                 "Authorization": localStorage.getItem("token")
             },
-            body: data
+            data: data
         })
-            .then(resp => resp.json())
             .then(result => {
-
-
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
-                console.log(result)
-
+                console.log(result);
+                props.addNewPost(result.data.post)
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
-
                 console.log(error)
-
-
             })
-
 
     }
 

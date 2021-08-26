@@ -4,6 +4,7 @@ import {Link} from "react-router-dom"
 import timeDifference from "../../helper/timeDiff";
 import Avatar from "../profile/Avatar";
 import configs from "../../assets/config/configs";
+import axios from "../../helper/axios";
 
 
 function NotificationPopup(props) {
@@ -14,72 +15,34 @@ function NotificationPopup(props) {
 
     const acceptReq = (id) => {
 
-        let link = configs.api_url + "/acceptFriendReq"
-
-        fetch(link, {
-            method: "POST",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            },
-            body: JSON.stringify({
+        axios.post(
+            "/acceptFriendReq",
+            JSON.stringify({
                 userID: id
-            })
-        })
-            .then(resp => resp.json())
+            }))
             .then(result => {
-
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
-
-                console.log(result)
-
-                if (result.message === "success")
+                if (result.data.message === "success")
                     setReqAccepted(true)
-
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
-
             })
 
 
     }
     const cancelReq = (id) => {
 
-        let link = configs.api_url + "/declineFriendReq"
-
-        fetch(link, {
-            method: "POST",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            },
-            body: JSON.stringify({
+        axios.post(
+            "/declineFriendReq",
+            JSON.stringify({
                 userID: id
-            })
-        })
-            .then(resp => resp.json())
+            }))
             .then(result => {
-
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
-
-                console.log(result)
-
-
-                if (result.message === "success")
+                if (result.data.message === "success")
                     setReqDeclined(true)
-
-
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
-
             })
 
 

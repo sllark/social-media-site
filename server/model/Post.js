@@ -12,7 +12,14 @@ const Post = new Schema({
         required: true
     },
     postImage:String,
-
+    isShared: {
+        type:Boolean,
+        default:false
+    },
+    sharedFrom: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+    },
     likes: {
         type: {
             count: {
@@ -37,6 +44,20 @@ const Post = new Schema({
                 {
                     type:Schema.Types.ObjectId,
                     ref:'CommentBy'
+                }
+            ]
+        },
+    },
+    shares: {
+        type: {
+            count: {
+                type: Number,
+                default: 0
+            },
+            by: [
+                {
+                    type:Schema.Types.ObjectId,
+                    ref:'User'
                 }
             ]
         },

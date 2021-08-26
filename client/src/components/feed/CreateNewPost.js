@@ -1,4 +1,5 @@
 import React, {useEffect, useRef, useState} from "react";
+import axios from "axios";
 
 import configs from "../../assets/config/configs";
 import Modal from "../ui/Modal";
@@ -7,7 +8,6 @@ import NameDisplay from "../ui/NameDisplay";
 import ImageUploader from "../general/ImageUploader";
 
 import dataURLtoFile from "../../helper/dataURLtoFile"
-
 
 
 function CreateNewPost(props) {
@@ -40,35 +40,22 @@ function CreateNewPost(props) {
 
 
         let link = configs.api_url;
-
-
-        fetch(link + "/createPost", {
-            method: "POST",
+        axios({
+            method: 'post',
+            url: link + "/createPost",
             headers: {
-                "Authorization": props.token
+                "Authorization": localStorage.getItem("token")
             },
-            body: data
+            data: data
         })
-            .then(resp => resp.json())
             .then(result => {
-
-
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
                 changeText("");
-                props.addNewPost(result.post);
+                props.addNewPost(result.data.post);
                 setShowModal(false);
                 setClearImage(true);
-
-
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
-
                 console.log(error)
-
-
             })
 
 

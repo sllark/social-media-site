@@ -9,7 +9,7 @@ import ProfileHeader from "../components/profile/ProfileHeader";
 import FeedPost from "../components/feed/FeedPost";
 import Sidebar from "../components/general/Sidebar";
 import Loading from "../components/ui/Loading";
-import configs from "../assets/config/configs";
+import axios from "../helper/axios";
 
 class Profile extends React.Component {
 
@@ -19,7 +19,6 @@ class Profile extends React.Component {
 
         this.state = {
             posts: [],
-            nextPageLoad: 1,
             maxPost: 1,
             isLoading: false,
             shouldRedirect: false,
@@ -33,12 +32,13 @@ class Profile extends React.Component {
 
     }
 
+
     componentDidMount() {
 
         if (this.props.match.params.id) {
             this.getUser();
             this.scrollEvent = window.addEventListener('scroll', this.loadMore);
-            this.loadPosts(this.state.nextPageLoad)
+            this.loadPosts()
         } else {
 
             this.setState({
@@ -46,39 +46,33 @@ class Profile extends React.Component {
             })
 
         }
-
     }
+
+
+    componentWillUnmount() {
+        window.removeEventListener('scroll', this.loadMore);
+    }
+
 
     getUser = () => {
         let id = this.props.match.params.id;
 
-        let link = configs.api_url + "/getUser?profileID=" + id;
-
-        fetch(link, {
-            method: "GET",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            }
-        })
-            .then(resp => resp.json())
+        axios.get(
+            "/getUser",
+            {
+                params: {
+                    profileID: id,
+                }
+            })
             .then(result => {
 
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
-
-                console.log(result.user);
-
                 this.setState({
-                    user: result.user
+                    user: result.data.user
                 })
 
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
-
             })
             .finally(() => {
                 this.setState({
@@ -89,7 +83,7 @@ class Profile extends React.Component {
 
     }
 
-    loadPosts = (pageNum = 1) => {
+    loadPosts = () => {
 
         let id = this.props.match.params.id;
 
@@ -97,36 +91,26 @@ class Profile extends React.Component {
             isLoading: true
         })
 
-        let link = configs.api_url+ "/getPosts?profileID=" + id + "&pageNum=" + pageNum;
-
-        fetch(link, {
-            method: "GET",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            }
-        })
-            .then(resp => resp.json())
+        axios.get(
+            "/getPosts",
+            {
+                params: {
+                    profileID: id,
+                    postsLoaded: this.state.posts.length
+                }
+            })
             .then(result => {
-
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
-                console.log(result)
 
                 this.setState((prevState) => {
                     return {
-                        posts: [...prevState.posts, ...result.posts],
-                        nextPageLoad: prevState.nextPageLoad + 1,
-                        maxPost: result.max
+                        posts: [...prevState.posts, ...result.data.posts],
+                        maxPost: result.data.max
                     }
                 })
 
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
-
             })
             .finally(() => {
                 this.setState({
@@ -156,7 +140,7 @@ class Profile extends React.Component {
             && this.state.maxPost !== this.state.posts.length
             && !this.state.isLoading
         ) {
-            this.loadPosts(this.state.nextPageLoad);
+            this.loadPosts();
         }
     }
 
@@ -197,43 +181,23 @@ class Profile extends React.Component {
 
         let id = this.props.match.params.id;
 
-        let link = configs.api_url+"/sendFriendReq";
 
-        fetch(link, {
-            method: "POST",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            },
-            body: JSON.stringify({
+        axios.post(
+            "/sendFriendReq",
+            JSON.stringify({
                 userID: id
-            })
-        })
-            .then(resp => resp.json())
+            }))
             .then(result => {
 
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
-
-                console.log(result)
-
-                if (result.message === "success") {
-
-
+                if (result.data.message === "success") {
                     let user = {...this.state.user};
                     user.reqSent = true;
-
                     this.setState({user})
-
                 }
-
 
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
-
             })
             .finally(() => {
                 this.setState({
@@ -250,41 +214,23 @@ class Profile extends React.Component {
 
         let id = this.props.match.params.id;
 
-        let link = configs.api_url+ "/cancelFriendReq";
 
-        fetch(link, {
-            method: "POST",
-            headers: {
-                "content-type": "application/json",
-                "Authorization": localStorage.getItem("token")
-            },
-            body: JSON.stringify({
+        axios.post(
+            "/cancelFriendReq",
+            JSON.stringify({
                 userID: id
-            })
-        })
-            .then(resp => resp.json())
+            }))
             .then(result => {
 
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
-
-
-                console.log(result)
-
-                if (result.message === "success" || result.errorMessage === "No Request to cancel") {
-
+                if (result.data.message === "success" || result.data.errorMessage === "No Request to cancel") {
                     let user = {...this.state.user};
                     user.reqSent = false;
                     this.setState({user})
-
                 }
-
 
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
                 console.log(error);
-
             })
             .finally(() => {
                 this.setState({
@@ -322,6 +268,7 @@ class Profile extends React.Component {
                                 updateBio={this.updateBio}
                                 sendReq={this.sendFriendReq}
                                 cancelReq={this.cancelReq}
+                                addNewPost={this.addNewPost}
                             />
 
 

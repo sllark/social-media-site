@@ -7,6 +7,7 @@ import * as validate from '../helper/formValidation'
 import FillScreen from "../components/FillScreen";
 import homeImage from "../assets/img/homeImage.png"
 import configs from "../assets/config/configs";
+import axios from "../helper/axios";
 
 class Login extends React.Component {
 
@@ -77,45 +78,32 @@ class Login extends React.Component {
 
         let link = configs.api_url;
 
-        fetch(link + "/login", {
-            method: "POST",
+        axios({
+            method: 'post',
+            url: link + "/login",
             headers: {
                 "content-type": "application/json"
             },
-            body: JSON.stringify({
+            data: {
                 email: form.email.value,
                 password: form.password.value,
-            })
+            }
         })
-            .then(resp => resp.json())
             .then(result => {
 
-                console.log(result);
-
-                if (result.error)
-                    throw new Error(JSON.stringify(result));
+                let data = result.data;
 
 
-                localStorage.setItem('token', result.token)
-                localStorage.setItem('userID', result.userID)
-                localStorage.setItem('name', result.name)
+                localStorage.setItem('token', data.token)
+                localStorage.setItem('userID', data.userID)
+                localStorage.setItem('name', data.name)
 
-
-                this.props.updateToken(result);
+                this.props.updateToken(data);
 
             })
             .catch(error => {
-                // let errorObject = JSON.parse(error.message);
-
                 console.log(error);
-
-                //do error handling here
-
-
-                // alert(errorObject.message);
-                // console.log(JSON.parse(error.message));
             })
-
 
     }
 

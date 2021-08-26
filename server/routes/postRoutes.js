@@ -50,6 +50,7 @@ router.get('/getMessages', isAuth, postControllers.getMessages)
 
 router.get('/getMessagesCount', isAuth, postControllers.getMessagesCount)
 
+router.get('/getOnlineFriends', isAuth, postControllers.getOnlineFriends)
 
 
 module.exports = router;
