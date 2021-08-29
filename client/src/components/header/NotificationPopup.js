@@ -26,6 +26,11 @@ function NotificationPopup(props) {
             })
             .catch(error => {
                 console.log(error);
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Could not accept request right now.")
             })
 
 
@@ -43,6 +48,11 @@ function NotificationPopup(props) {
             })
             .catch(error => {
                 console.log(error);
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Could not decline request right now.")
             })
 
 

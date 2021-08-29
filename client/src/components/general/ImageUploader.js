@@ -65,8 +65,7 @@ function ImageUploader(props) {
 
                             <div className="cross"
                                  onClick={clearInput}
-                            >X
-                            </div>
+                            />
                             <img src={props.cropImage} alt="" onClick={() => changeShowModal(true)} tabIndex='1'/>
                         </div>
                     </div>

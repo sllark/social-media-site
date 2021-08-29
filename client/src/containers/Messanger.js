@@ -10,6 +10,7 @@ import TextEditor from "../components/general/TextEditor";
 
 import Loading from "../components/ui/Loading";
 import axios from "../helper/axios";
+import ShowResponse from "../components/ui/ShowResponse";
 
 
 class Messanger extends React.Component {
@@ -30,7 +31,9 @@ class Messanger extends React.Component {
             datesCount: 0,
             otherUserTyping: false,
             myProfile: {},
-            otherUserProfile: {}
+            otherUserProfile: {},
+            responseMsg: "",
+            responseStatus: ""
         }
 
         this.socket = undefined;
@@ -119,6 +122,11 @@ class Messanger extends React.Component {
             })
             .catch(error => {
                 console.log(error);
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Failed to load user data...")
             })
 
     }
@@ -158,10 +166,16 @@ class Messanger extends React.Component {
                 }
             })
             .then(result => {
-                if (result.data.message === "success") this.setState({maxMessages: result.data.max})
+                if (result.data.message === "success")
+                    this.setState({maxMessages: result.data.max})
             })
             .catch(error => {
                 console.log(error);
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Unable to load old messages...")
             })
 
     }
@@ -189,8 +203,14 @@ class Messanger extends React.Component {
             })
             .catch(error => {
                 console.log(error);
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Unable to load old messages...")
+
             })
-            .finally(() => {
+            .then(() => {
                 if (!this._isMounted) return
                 this.setState({
                     isLoading: false
@@ -234,19 +254,21 @@ class Messanger extends React.Component {
             isSameDay = datesAreOnSameDay(newestDate, this.state.newestDate || new Date(null))
 
             if (!this.state.oldestDate) oldestDate = new Date(msgObj.createdAt)
-        } else {
+        }
+        else {
             oldestDate = new Date(msgObj.createdAt)
             isSameDay = datesAreOnSameDay(oldestDate, this.state.oldestDate || new Date(null))
 
             //if loading msg from db, then set first msg (most recent) date to newest date
             if (!this.state.newestDate) newestDate = new Date(msgObj.createdAt)
         }
-        // debugger
 
         this.setState((prevState) => {
 
             let messages = [...prevState.messages];
 
+
+            // add new date in messages
             if (!this.state.oldestDate || !isSameDay) {
                 let dateObj = {
                     type: 'date',
@@ -254,29 +276,25 @@ class Messanger extends React.Component {
                     value: msgObj.createdAt
                 };
 
-                // console.log('in', !this.state.oldestDate || !isSameDay, !this.state.oldestDate, !isSameDay)
-
                 isNewMsg ? messages.push(dateObj) : messages.splice(0, 0, dateObj);
                 msgInc = 2;
             }
 
             isNewMsg ? messages.push(msgObj) : messages.splice(1, 0, msgObj);
 
-            // debugger
+
+            // (we get max from server, total old messages) if new msg and new day then increment by 2 (add new msg and date) else if msg is old but day is not same increment max by 1 (add date in msgs array ) else if msg is old and day is same them keep the old max
+            const maxMessages = isNewMsg ? prevState.maxMessages + msgInc : msgInc > 1 ? prevState.maxMessages + 1 : prevState.maxMessages
 
             return {
                 messages: messages,
-
-                // (we get max from server, total old messages) if new msg and new day then increment by 2 (add new msg and date) else if msg is old but day is not same increment max by 1 (add date in msgs array ) else if msg is old and day is same them keep the max
-                maxMessages: isNewMsg ? prevState.maxMessages + msgInc : msgInc > 1 ? prevState.maxMessages + 1 : prevState.maxMessages,
-
+                maxMessages: maxMessages,
                 addedNewMsg: isNewMsg,
                 addedOldMsg: !isNewMsg,
                 oldestDate: oldestDate || prevState.oldestDate,
                 newestDate: newestDate || prevState.newestDate,
                 datesCount: msgInc > 1 ? prevState.datesCount + 1 : prevState.datesCount,
             }
-
 
         })
 
@@ -312,12 +330,29 @@ class Messanger extends React.Component {
     }
 
 
+    setResponsePreview = (status, msg) => {
+        this.setState({
+            responseMsg: msg,
+            responseStatus: status
+        })
+    }
+
+
     render() {
 
         return (
             <FillScreen class="bg-light">
 
-                <Header/>
+                {this.state.responseStatus !== "" ?
+                    <ShowResponse
+                        status={this.state.responseStatus}
+                        message={this.state.responseMsg}
+                        hideMe={() => this.setState({responseStatus: ""})}
+                    />
+                    : null
+                }
+
+                {/*<Header setResponsePreview={this.setResponsePreview}/>*/}
 
                 <div className="home__container d-flex flex-row justify-center">
 
@@ -354,7 +389,8 @@ class Messanger extends React.Component {
                         <div className="messanger__editor">
 
                             <TextEditor
-                                post={this.postMsg} placeholder="Type Message..."
+                                post={this.postMsg}
+                                placeholder="Type Message..."
                                 onKeyPress={this.typingStart}
                                 profile={this.state.myProfile}
                             />

@@ -1,6 +1,7 @@
 import React from "react";
-import {Link, Redirect} from "react-router-dom";
+import {j, Redirect} from "react-router-dom";
 
+import axios from "../helper/axios";
 
 import FillScreen from "../components/FillScreen";
 import Header from "../components/header/Header";
@@ -9,7 +10,7 @@ import ProfileHeader from "../components/profile/ProfileHeader";
 import FeedPost from "../components/feed/FeedPost";
 import Sidebar from "../components/general/Sidebar";
 import Loading from "../components/ui/Loading";
-import axios from "../helper/axios";
+import ShowResponse from "../components/ui/ShowResponse";
 
 class Profile extends React.Component {
 
@@ -25,7 +26,9 @@ class Profile extends React.Component {
             user: {
                 firstName: ".",
                 lastName: "."
-            }
+            },
+            responseMsg: "",
+            responseStatus: ""
         }
 
         this.scrollEvent = null;
@@ -73,8 +76,14 @@ class Profile extends React.Component {
             })
             .catch(error => {
                 console.log(error);
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Loading Failed...")
+
             })
-            .finally(() => {
+            .then(() => {
                 this.setState({
                     isLoading: false
                 })
@@ -111,8 +120,13 @@ class Profile extends React.Component {
             })
             .catch(error => {
                 console.log(error);
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Loading Failed...")
+
             })
-            .finally(() => {
+            .then(() => {
                 this.setState({
                     isLoading: false
                 })
@@ -198,8 +212,14 @@ class Profile extends React.Component {
             })
             .catch(error => {
                 console.log(error);
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Loading Failed...")
+
             })
-            .finally(() => {
+            .then(() => {
                 this.setState({
                     isLoading: false
                 })
@@ -231,8 +251,15 @@ class Profile extends React.Component {
             })
             .catch(error => {
                 console.log(error);
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Loading Failed...")
+
+
             })
-            .finally(() => {
+            .then(() => {
                 this.setState({
                     isLoading: false
                 })
@@ -240,6 +267,16 @@ class Profile extends React.Component {
 
 
     }
+
+
+    setResponsePreview = (status, msg) => {
+        this.setState({
+            responseMsg: msg,
+            responseStatus: status
+        })
+    }
+
+
 
     render() {
 
@@ -250,7 +287,18 @@ class Profile extends React.Component {
         return (
             <FillScreen class="bg-light">
 
-                <Header user={this.state.user}/>
+
+                {this.state.responseStatus !== "" ?
+                    <ShowResponse
+                        status={this.state.responseStatus}
+                        message={this.state.responseMsg}
+                        hideMe={() => this.setState({responseStatus: ""})}
+                    />
+                    : null
+                }
+
+
+                {/*<Header setResponsePreview={this.setResponsePreview}/>*/}
 
                 <div className="home__container d-flex flex-row justify-end">
 
@@ -269,6 +317,7 @@ class Profile extends React.Component {
                                 sendReq={this.sendFriendReq}
                                 cancelReq={this.cancelReq}
                                 addNewPost={this.addNewPost}
+                                setResponsePreview={this.setResponsePreview}
                             />
 
 
@@ -283,6 +332,7 @@ class Profile extends React.Component {
                                                 placeholder={"write something..."}
                                                 token={localStorage.getItem("token")}
                                                 addNewPost={this.addNewPost}
+                                                setResponsePreview={this.setResponsePreview}
                                             /> : null
                                     }
 
@@ -292,7 +342,9 @@ class Profile extends React.Component {
                                             <FeedPost
                                                 key={post._id}
                                                 post={post}
-                                                removePost={this.removePost}/>)
+                                                removePost={this.removePost}
+                                                setResponsePreview={this.setResponsePreview}
+                                            />)
                                     }
                                     {
                                         !this.state.isLoading && this.state.posts.length < 1 ?
@@ -333,17 +385,17 @@ class Profile extends React.Component {
                                     }
 
 
-                                    <p className="mainPage__body__about__item liveIn">
-                                        Lives in <Link to={'/'}>Lahore,Pakistan</Link>
-                                    </p>
+                                    {/*<p className="mainPage__body__about__item liveIn">*/}
+                                    {/*    Lives in <j to={'/'}>Lahore,Pakistan</j>*/}
+                                    {/*</p>*/}
 
-                                    <p className="mainPage__body__about__item work">
-                                        Work at <Link to={'/'}>ABC Villas</Link>
-                                    </p>
+                                    {/*<p className="mainPage__body__about__item work">*/}
+                                    {/*    Work at <j to={'/'}>ABC Villas</j>*/}
+                                    {/*</p>*/}
 
-                                    <p className="mainPage__body__about__item study">
-                                        Studied at <Link to={'/'}>Ahmad Hassan Polytechnic</Link>
-                                    </p>
+                                    {/*<p className="mainPage__body__about__item study">*/}
+                                    {/*    Studied at <j to={'/'}>Ahmad Hassan Polytechnic</j>*/}
+                                    {/*</p>*/}
 
 
                                 </div>

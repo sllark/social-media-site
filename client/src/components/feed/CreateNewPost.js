@@ -51,12 +51,21 @@ function CreateNewPost(props) {
             .then(result => {
                 changeText("");
                 props.addNewPost(result.data.post);
-                setShowModal(false);
                 setClearImage(true);
             })
             .catch(error => {
                 console.log(error)
+
+
+                if (error.response)
+                    props.setResponsePreview("failed", error.response.data.message)
+                else
+                    props.setResponsePreview("failed", "Loading Failed...")
             })
+            .then(()=>{
+                setShowModal(false);
+            })
+
 
 
     }

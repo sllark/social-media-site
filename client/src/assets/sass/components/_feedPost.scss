@@ -75,6 +75,27 @@
 
   }
 
+  &__shared{
+    padding: 1rem;
+    margin: 0 1.5rem 1rem;
+    display: flex;
+    flex-flow: column;
+    border: $input-border;
+    border-top: unset;
+    border-bottom-left-radius: $container-border-radius;
+    border-bottom-right-radius: $container-border-radius;
+
+    a{
+      font-size: 1.6rem;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+    span{
+      margin-top: 0.3rem;
+    }
+
+
+  }
 
   &__stats{
     display: flex;
@@ -246,5 +267,8 @@
     display: none;
   }
 
+  .borderBottom{
+    border-bottom: 1px solid rgba(#000, 0.2);
+  }
 
 }

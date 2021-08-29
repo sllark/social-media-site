@@ -37,26 +37,35 @@ class FeedPost extends React.Component {
 
     likeClick = (e) => {
 
-
-        this.setState(
-            (prevState) => {
-                return {
-                    likesNum: prevState.hasLiked ? prevState.likesNum - 1 : prevState.likesNum + 1,
-                    hasLiked: !prevState.hasLiked
-                }
-            }
-        )
-
         axios.post(
             "/likePost",
             JSON.stringify({
                 postID: this.props.post._id,
             }))
             .then(result => {
-                console.log(result.data);
+
+                // if (result.data.message === "success")
+                //     this.props.setResponsePreview("success", "Liked Successfully...")
+                // else if (result.data.message === "like remove success")
+                //     this.props.setResponsePreview("success", "Removed Like Successfully...")
+
+                this.setState(
+                    (prevState) => {
+                        return {
+                            likesNum: prevState.hasLiked ? prevState.likesNum - 1 : prevState.likesNum + 1,
+                            hasLiked: !prevState.hasLiked
+                        }
+                    }
+                )
+
             })
             .catch(error => {
                 console.log(error);
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Internal Server Error.")
             })
 
 
@@ -71,6 +80,32 @@ class FeedPost extends React.Component {
                 }
             }
         )
+
+    }
+
+
+    sharePost = (e) => {
+
+        axios.post(
+            "/sharePost",
+            JSON.stringify({
+                postID: this.props.post._id,
+            }))
+            .then(result => {
+                if (result.data.message === "success")
+                    this.props.setResponsePreview("success", "Shared successfully on your profile.")
+
+            })
+            .catch(error => {
+                console.log(error);
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Internal Server Error.")
+
+            })
+
 
     }
 
@@ -99,16 +134,29 @@ class FeedPost extends React.Component {
             }))
             .then(result => {
 
-                let comments = [...this.state.comments];
-                comments.splice(0, 0, result.data.comment)
-                this.setState({
-                    comments
-                })
 
-                clearValues()
+                if (result.data.message === "success") {
+                    let comments = [...this.state.comments];
+                    comments.splice(0, 0, result.data.comment)
+                    this.setState({
+                        comments
+                    })
+                    clearValues()
+
+                    // this.props.setResponsePreview("success", "Commented Successfully...")
+                }
+
+
+
             })
             .catch(error => {
                 console.log(error);
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Internal Server Error.")
+
             })
 
     }
@@ -128,11 +176,20 @@ class FeedPost extends React.Component {
 
                 if (result.data.message === "success") {
                     this.props.removePost(postID);
+                    this.props.setResponsePreview("success", "Post deleted successfully...")
                 }
+
+
 
             })
             .catch(error => {
                 console.log(error);
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Internal Server Error.")
+
             })
 
 
@@ -186,12 +243,12 @@ class FeedPost extends React.Component {
 
 
                         <div className="feedPost__header__options">
-                            <Option postUserId={post.user._id} delete={this.deletePost}/>
+                            <Option postUserId={post.user._id} posId={post._id} delete={this.deletePost}/>
                         </div>
 
                     </div>
 
-                    <div className="feedPost__content">
+                    <div className={"feedPost__content" + (!post.postImage && post.isShared ? " borderBottom" : "")}>
 
                         <pre className="feedPost__content__description">
                             {post.postText}
@@ -207,6 +264,22 @@ class FeedPost extends React.Component {
                                 : null
                         }
                     </div>
+
+
+                    {
+                        post.isShared ?
+                            <div className="feedPost__shared">
+
+                                <Link
+                                    to={"/profile/" + post.sharedFrom._id}>
+                                    {post.sharedFrom.firstName + " " + post.sharedFrom.lastName}
+                                </Link>
+                                <span>{timeDifference(new Date(post.originalPostedTime).getTime())}</span>
+
+                            </div>
+                            : null
+                    }
+
 
                     {
                         this.state.likesNum > 0 || this.state.comments.length > 0 ?
@@ -266,9 +339,8 @@ class FeedPost extends React.Component {
 
                         {
                             post.user._id !== localStorage.getItem('userID') ?
-                                <div className="feedPost__reacts__item">
+                                <div className="feedPost__reacts__item" onClick={this.sharePost}>
                                     <i className="share"/>
-                                    <p className="reactNumber">{""}</p>
                                     <p>
                                         Share
                                     </p>

@@ -1,5 +1,7 @@
 import React from "react";
 
+import axios from "../helper/axios";
+
 
 import FillScreen from "../components/FillScreen";
 import Header from "../components/header/Header";
@@ -8,7 +10,8 @@ import FeedPost from "../components/feed/FeedPost";
 import Sidebar from "../components/general/Sidebar";
 import SidebarOnline from "../components/general/SidebarOnline";
 import Loading from "../components/ui/Loading";
-import axios from "../helper/axios";
+import ShowResponse from "../components/ui/ShowResponse";
+
 
 class Feed extends React.Component {
 
@@ -19,7 +22,9 @@ class Feed extends React.Component {
         this.state = {
             posts: [],
             maxPost: 1,
-            isLoading: false
+            isLoading: false,
+            responseMsg: "",
+            responseStatus: ""
         }
 
         this.scrollEvent = null;
@@ -27,11 +32,9 @@ class Feed extends React.Component {
     }
 
     componentDidMount() {
-
         this.scrollEvent = window.addEventListener('scroll', this.loadMore);
         this.getFeedPostsCount()
         this.loadFeedPosts()
-
     }
 
     componentWillUnmount() {
@@ -76,8 +79,14 @@ class Feed extends React.Component {
             })
             .catch(error => {
                 console.log(error);
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Loading Failed...")
+
             })
-            .finally(() => {
+            .then(() => {
                 this.setState({
                     isLoading: false
                 })
@@ -95,6 +104,12 @@ class Feed extends React.Component {
             })
             .catch(error => {
                 console.log(error);
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Loading Failed...")
+
             })
     }
 
@@ -127,8 +142,13 @@ class Feed extends React.Component {
                 maxPost: prevState.maxPost - 1,
             }
         })
+    }
 
-
+    setResponsePreview = (status, msg) => {
+        this.setState({
+            responseMsg: msg,
+            responseStatus: status
+        })
     }
 
     render() {
@@ -137,7 +157,16 @@ class Feed extends React.Component {
         return (
             <FillScreen class="bg-light">
 
-                <Header/>
+                {this.state.responseStatus !== "" ?
+                    <ShowResponse
+                        status={this.state.responseStatus}
+                        message={this.state.responseMsg}
+                        hideMe={() => this.setState({responseStatus: ""})}
+                    />
+                    : null
+                }
+
+                {/*<Header setResponsePreview={this.setResponsePreview}/>*/}
 
                 <div className="home__container d-flex flex-row justify-center">
 
@@ -150,6 +179,7 @@ class Feed extends React.Component {
                             placeholder={"write something..."}
                             token={this.props.token}
                             addNewPost={this.addNewPost}
+                            setResponsePreview={this.setResponsePreview}
                         />
 
                         {
@@ -157,7 +187,9 @@ class Feed extends React.Component {
                                 <FeedPost
                                     key={post._id}
                                     post={post}
-                                    removePost={this.removePost}/>)
+                                    removePost={this.removePost}
+                                    setResponsePreview={this.setResponsePreview}
+                                />)
                         }
                         {
                             !this.state.isLoading && this.state.posts.length < 1 ?

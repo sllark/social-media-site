@@ -21,6 +21,11 @@ function Comment(props) {
             })
             .catch(error => {
                 console.log(error);
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Failed to like comment...")
             })
 
     }

@@ -6,7 +6,9 @@ import configs from "./assets/config/configs";
 
 import './assets/sass/main.scss'
 
-import Home from './containers/Home'
+import Layout from "./components/ui/Layout";
+
+import Signup from './containers/Signup'
 import Login from './containers/Login'
 import Feed from './containers/Feed'
 import Profile from './containers/Profile'
@@ -18,18 +20,20 @@ import About from './containers/About'
 
 class App extends React.Component {
 
-    state = {
-        token: "",
-        userID: "",
-        socket: null
+    constructor(props) {
+        super(props);
+        this.state = {
+            token: "",
+            userID: "",
+        }
+
+        this.socket = undefined
     }
 
     componentDidMount() {
         this.socket = io.connect(configs.api_url, {transport: ['websocket']})
 
-        this.socket.emit('join', {
-            token: localStorage.getItem('token')
-        })
+        this.joinSocket(this.socket)
 
         this.socket.on('disconnect', (msg) => {
             console.log('disconnected');
@@ -37,10 +41,8 @@ class App extends React.Component {
 
         this.socket.on('wrongToken', (msg) => {
             console.log('wrong token detected');
-            alert("Authentication Failed!!! Please login first");
+            // alert("Authentication Failed!!! Please login first");
         })
-
-        this.setState({socket: this.socket})
 
 
         let token = localStorage.getItem("token"),
@@ -50,8 +52,24 @@ class App extends React.Component {
             this.setState({token, userID})
     }
 
-    updateToken = ({token, userID}) => {
-        this.setState({token, userID})
+    joinSocket = (socket) => {
+
+        socket.emit('join', {
+            token: localStorage.getItem('token')
+        })
+
+    }
+
+    updateToken = (data) => {
+
+        localStorage.setItem('token', data.token)
+        localStorage.setItem('userID', data.userID)
+        localStorage.setItem('name', data.name)
+
+        this.socket.connect()
+        this.joinSocket(this.socket)
+
+        this.setState({token: data.token, userID: data.userID})
     }
 
 
@@ -62,38 +80,51 @@ class App extends React.Component {
 
                 <Switch>
                     <Route path="/about">
-                        <About token={this.state.token} userID={this.state.userID}/>
+                        <Layout>
+                            <About/>
+                        </Layout>
                     </Route>
                     <Route path="/login">
-                        <Login
-                            token={this.state.token}
-                            userID={this.state.userID}
-                            updateToken={this.updateToken}
-                        />
+                        <Login updateToken={this.updateToken}/>
                     </Route>
-                    <Route path="/feed">
-                        <Feed token={this.state.token} userID={this.state.userID}/>
+                    <Route path="/signup">
+                        <Signup updateToken={this.updateToken}/>
                     </Route>
-                    {/*<Route path="/profile">*/}
-                    {/*    <Profile token={this.state.token} userID={this.state.userID}/>*/}
-                    {/*</Route>*/}
+                    <Route path="/feed"
+                           render={props =>
+                               <Layout {...props}>
+                                   <Feed token={this.state.token} userID={this.state.userID}/>
+                               </Layout>
+                           }/>
 
-                    <Route path="/profile/:id" render={(props) => <Profile {...props} key={props.match.params.id}/>}
+                    <Route path="/profile/:id"
+                           render={(props) =>
+                               <Layout {...props}>
+                                   <Profile key={props.match.params.id}  {...props}/>
+                               </Layout>}
                     />
 
-                    <Route path="/friends">
-                        <Friends token={this.state.token} userID={this.state.userID}/>
-                    </Route>
-                    <Route path="/search">
-                        <Search token={this.state.token} userID={this.state.userID}/>
-                    </Route>
+                    <Route path="/friends" render={
+                        props =>
+                            <Layout {...props}>
+                                <Friends/>
+                            </Layout>
+                    }
+                    />
+                    <Route path="/search" render={
+                        props =>
+                            <Layout {...props}>
+                                <Search {...props}/>
+                            </Layout>}/>
                     <Route path="/messanger/:id"
                            render={(props) =>
-                               <Messanger  {...props} key={props.match.params.id} socket={this.state.socket}/>
+                               <Layout {...props} >
+                                   <Messanger  key={props.match.params.id}  {...props} socket={this.socket}/>
+                               </Layout>
                            }
                     />
                     <Route path="/">
-                        <Home/>
+                        <Login updateToken={this.updateToken}/>
                     </Route>
                 </Switch>
 

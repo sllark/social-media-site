@@ -27,7 +27,7 @@ function Option(props) {
 
             <ul className={"feedPostOption__list" + (hideOptions ? " hideModal" : "")}>
                 <li>
-                    <Link to={"/post"}>View Post</Link>
+                    <Link to={"/post/"+props.posId}>View Post</Link>
                 </li>
                 {
                     props.postUserId.toString() === localStorage.getItem('userID') ?

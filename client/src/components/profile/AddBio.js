@@ -3,7 +3,7 @@ import Loading from "../ui/Loading";
 
 import axios from "../../helper/axios";
 
-function ProfileHeader(props) {
+function AddBio(props) {
 
 
     const [bio, setBio] = useState("");
@@ -25,14 +25,22 @@ function ProfileHeader(props) {
             "/addBio",
             JSON.stringify({bio: bio}))
             .then(result => {
-
                 //set user bio locally
                 props.updateBio(result.data.bio);
-                setLoading(false);
-                setShowInput(false);
+
             })
             .catch(error => {
                 console.log(error)
+
+                if (error.response)
+                    this.props.setResponsePreview("failed", error.response.data.message)
+                else
+                    this.props.setResponsePreview("failed", "Failed to update bio...")
+
+            })
+            .then(()=>{
+                setLoading(false);
+                setShowInput(false);
             })
 
 
@@ -46,7 +54,7 @@ function ProfileHeader(props) {
                     <button className="addBio__clickBtn btn btn--transparent noBorder"
                             onClick={() => setShowInput(true)}>
                         {
-                            props.shouldUpdate ? "Update Bio" : "Add Bio"
+                            props.haveBio ? "Update Bio" : "Add Bio"
                         }
                     </button>
                     : null
@@ -74,4 +82,4 @@ function ProfileHeader(props) {
 }
 
 
-export default ProfileHeader;
+export default AddBio;

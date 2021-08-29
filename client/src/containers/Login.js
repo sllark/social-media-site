@@ -1,13 +1,15 @@
 import React from "react";
-import {Link} from "react-router-dom"
+import {Link, Redirect} from "react-router-dom"
 
 
 import * as validate from '../helper/formValidation'
+import configs from "../assets/config/configs";
+import axios from "../helper/axios";
+
 
 import FillScreen from "../components/FillScreen";
 import homeImage from "../assets/img/homeImage.png"
-import configs from "../assets/config/configs";
-import axios from "../helper/axios";
+import Loading from "../components/ui/Loading";
 
 class Login extends React.Component {
 
@@ -25,8 +27,10 @@ class Login extends React.Component {
                 isValid: true,
                 validate: () => validate.minLength(this.state.form.password.value, 6),
             }
-        }
-
+        },
+        isLoading: false,
+        errorMsg: "",
+        redirect:undefined
     }
 
 
@@ -61,6 +65,8 @@ class Login extends React.Component {
         e.preventDefault();
 
 
+
+
         let form = {...this.state.form},
             isFormValid = true;
 
@@ -75,6 +81,11 @@ class Login extends React.Component {
 
 
         if (!isFormValid) return;
+
+        this.setState({
+            isLoading: true,
+            errorMsg: ""
+        })
 
         let link = configs.api_url;
 
@@ -91,18 +102,20 @@ class Login extends React.Component {
         })
             .then(result => {
 
-                let data = result.data;
-
-
-                localStorage.setItem('token', data.token)
-                localStorage.setItem('userID', data.userID)
-                localStorage.setItem('name', data.name)
-
-                this.props.updateToken(data);
+                this.props.updateToken(result.data);
+                this.setState({redirect:"/feed"})
 
             })
             .catch(error => {
-                console.log(error);
+                console.log(error.response);
+                if (error.response)
+                    this.setState({errorMsg: error.response.data.message})
+                else
+                    this.setState({errorMsg: "Internal Server Error."})
+
+            })
+            .then(() => {
+                this.setState({isLoading: false})
             })
 
     }
@@ -110,6 +123,8 @@ class Login extends React.Component {
 
     render() {
 
+        if (this.state.redirect)
+            return <Redirect to={this.state.redirect}/>
 
         return (
             <FillScreen class="home login flex-center">
@@ -126,59 +141,68 @@ class Login extends React.Component {
 
                     <div className="home__container__form flex-center flex-column loginForm">
 
-                        <form action="#" onSubmit={this.onFormSubmit}>
+                        {!this.state.isLoading ?
+                            <>
+                                {
+                                    this.state.errorMsg !==""?
+                                        <p className="formErrorMsg">
+                                            {this.state.errorMsg}
+                                        </p> : null
+                                }
+                                <form action="#" onSubmit={this.onFormSubmit}>
 
-                            <label>
-                                <p>
-                                    Email
-                                </p>
-                                <span>
+                                    <label>
+                                        <p>
+                                            Email
+                                        </p>
+                                        <span>
                                     {
                                         !this.state.form.email.isValid ? this.state.form.email.errorMessage : ""
                                     }
                                 </span>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    placeholder="john.doe@example.com"
-                                    value={this.state.form.email.value}
-                                    onChange={this.changeHandler}
-                                    className={!this.state.form.email.isValid ? "invalid" : ""}
-                                />
-                            </label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            placeholder="john.doe@example.com"
+                                            value={this.state.form.email.value}
+                                            onChange={this.changeHandler}
+                                            className={!this.state.form.email.isValid ? "invalid" : ""}
+                                        />
+                                    </label>
 
 
-                            <label>
-                                <p>
-                                    Password
-                                </p>
-                                <span>
+                                    <label>
+                                        <p>
+                                            Password
+                                        </p>
+                                        <span>
                                     {
                                         !this.state.form.password.isValid ? this.state.form.password.errorMessage : ""
                                     }
                                 </span>
-                                <input
-                                    type="password"
-                                    name="password"
-                                    placeholder="Password"
-                                    value={this.state.form.password.value}
-                                    onChange={this.changeHandler}
-                                    className={!this.state.form.password.isValid ? "invalid" : ""}
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            placeholder="Password"
+                                            value={this.state.form.password.value}
+                                            onChange={this.changeHandler}
+                                            className={!this.state.form.password.isValid ? "invalid" : ""}
 
-                                />
-                            </label>
-
-
-                            <input type="submit" className="btn btn--secondary" value="LOGIN"/>
-                        </form>
+                                        />
+                                    </label>
 
 
-                        <p className="home__container__form__loginLink">
-                            New Here?
-                            <Link to="/">
-                                Create Account
-                            </Link>
-                        </p>
+                                    <input type="submit" className="btn btn--secondary" value="LOGIN"/>
+                                </form>
+                                <p className="home__container__form__loginLink">
+                                    New Here?
+                                    <Link to="/signup">
+                                        Create Account
+                                    </Link>
+                                </p>
+                            </>
+                            : <Loading/>
+                        }
 
 
                     </div>

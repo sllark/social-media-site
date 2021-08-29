@@ -1,7 +1,9 @@
 import React from "react";
 import {Link} from "react-router-dom";
 
-import profile from "../../assets/img/profile.jpg";
+import configs from "../../assets/config/configs";
+
+import profile from "../../assets/img/personAvatar.png";
 
 function truncateString(str, num) {
     if (str.length > num) {
@@ -13,20 +15,22 @@ function truncateString(str, num) {
 
 function Person(props) {
 
+    let profileUrl = "";
+    profileUrl = props.user.profilePicture ? (configs.api_url + "/images/" + props.user.profilePicture) : profile;
 
     return (
-        <Link to="/profile/" className="person">
-            <img src={props.firend.profilePicUrl || profile} alt=""/>
+        <Link to={"/profile/"+props.user._id} className="person">
+            <img src={profileUrl} alt=""/>
             <div className="person__text">
                 <h4 className="person__text__name">
-                    {props.firend.name}
+                    {props.user.firstName + " " + props.user.lastName}
                 </h4>
 
                 <p className="person__text__bio">
-                    {truncateString(props.firend.bio, 80)}
+                    {truncateString(props.user.bio, 80)}
                 </p>
                 <p className="person__text__dob">
-                    {props.firend.dob}
+                    {props.user.dob}
                 </p>
 
             </div>

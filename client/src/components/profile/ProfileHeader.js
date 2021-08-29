@@ -13,6 +13,15 @@ import axios from "axios";
 
 function ProfileHeader(props) {
 
+    //props:
+    // user
+    // updateBio
+    // sendReq
+    // cancelReq
+    // addNewPost
+    // setResponsePreview
+
+
     const profileimageRef = useRef();
     const coverImageRef = useRef();
     const coverIputRef = useRef();
@@ -112,6 +121,12 @@ function ProfileHeader(props) {
             })
             .catch(error => {
                 console.log(error)
+
+                if (error.response)
+                    props.setResponsePreview("failed", error.response.data.message)
+                else
+                    props.setResponsePreview("failed", "Failed to update image.")
+
             })
 
     }
@@ -247,23 +262,21 @@ function ProfileHeader(props) {
                         : null
                 }
 
-                {
-                    !props.user.bio && isMyProfile ?
-                        <AddBio user={props.user} updateBio={props.updateBio}/> :
-                        props.user.bio && isMyProfile ?
-                            <AddBio user={props.user} updateBio={props.updateBio} shouldUpdate={true}/> : null
-                }
 
                 {
-                    !isMyProfile ?
+                    isMyProfile ?
+                        <AddBio
+                            user={props.user}
+                            updateBio={props.updateBio}
+                            haveBio={!!props.user.bio}
+                            setResponsePreview={props.setResponsePreview}/> :
+
                         <div className="profileHeader__buttons">
                             {reqBtn}
                             <Link className="btn btn--transparent" to={"/messanger/" + props.user._id}>Message</Link>
-
                         </div>
-
-                        : null
                 }
+
 
             </div>
 
@@ -303,3 +316,9 @@ function ProfileHeader(props) {
 
 
 export default ProfileHeader;
+
+
+
+
+
+

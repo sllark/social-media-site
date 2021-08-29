@@ -12,10 +12,8 @@ function TextEditor(props) {
 
     const [commentValue, changeCommentValue] = useState("");
 
-    let onKeyPress = () => {
-    };
+    let onKeyPress = () => {};
     if (props.onKeyPress) onKeyPress = props.onKeyPress;
-    // if (props.onKeyUp) onKeyUp=props.onKeyUp;
 
 
     let profilePic = props?.profile?.profilePicture || "";
