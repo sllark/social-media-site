@@ -9,6 +9,7 @@ import Loading from "../components/ui/Loading";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import ShowResponse from "../components/ui/ShowResponse";
 import axios from "../helper/axios";
+import handleAxiosError from "../helper/handleAxiosError";
 
 
 class Profile extends React.Component {
@@ -58,13 +59,7 @@ class Profile extends React.Component {
 
             })
             .catch(error => {
-                console.log(error);
-
-                if (error.response)
-                    this.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.setResponsePreview("failed", "Loading Failed...")
-
+                handleAxiosError(error,this.setResponsePreview,"Loading Failed...")
             })
 
 
@@ -94,12 +89,7 @@ class Profile extends React.Component {
 
             })
             .catch(error => {
-                console.log(error);
-
-                if (error.response)
-                    this.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.setResponsePreview("failed", "Failed to load friends...")
+                handleAxiosError(error,this.setResponsePreview,"Failed to load friends...")
 
             })
             .then(() => {
@@ -125,12 +115,7 @@ class Profile extends React.Component {
 
             })
             .catch(error => {
-                console.log(error);
-
-                if (error.response)
-                    this.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.setResponsePreview("failed", "Failed to load friends...")
+                handleAxiosError(error,this.setResponsePreview,"Failed to load friends...")
 
             })
 

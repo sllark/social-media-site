@@ -2,7 +2,6 @@ import React from "react";
 
 
 import FillScreen from "../components/FillScreen";
-import Header from "../components/header/Header";
 import Sidebar from "../components/general/Sidebar";
 import SidebarOnline from "../components/general/SidebarOnline";
 import Message from "../components/messanger/Message";
@@ -11,6 +10,7 @@ import TextEditor from "../components/general/TextEditor";
 import Loading from "../components/ui/Loading";
 import axios from "../helper/axios";
 import ShowResponse from "../components/ui/ShowResponse";
+import handleAxiosError from "../helper/handleAxiosError";
 
 
 class Messanger extends React.Component {
@@ -121,12 +121,7 @@ class Messanger extends React.Component {
                 return result.data.user;
             })
             .catch(error => {
-                console.log(error);
-
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Failed to load user data...")
+                handleAxiosError(error, this.setResponsePreview, "Failed to load user data...")
             })
 
     }
@@ -171,11 +166,7 @@ class Messanger extends React.Component {
             })
             .catch(error => {
                 console.log(error);
-
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Unable to load old messages...")
+                handleAxiosError(error, this.setResponsePreview, "Unable to load old messages...")
             })
 
     }
@@ -202,12 +193,7 @@ class Messanger extends React.Component {
                 })
             })
             .catch(error => {
-                console.log(error);
-
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Unable to load old messages...")
+                handleAxiosError(error, this.setResponsePreview, "Unable to load old messages...")
 
             })
             .then(() => {
@@ -228,7 +214,7 @@ class Messanger extends React.Component {
             from: localStorage.getItem('userID')
         };
 
-        this.props.socket.emit('chat message', msgObj);
+        if (this.props.socket) this.props.socket.emit('chat message', msgObj);
         this.addNewMsg({value}, true);
         clearValue();
     }
@@ -254,8 +240,7 @@ class Messanger extends React.Component {
             isSameDay = datesAreOnSameDay(newestDate, this.state.newestDate || new Date(null))
 
             if (!this.state.oldestDate) oldestDate = new Date(msgObj.createdAt)
-        }
-        else {
+        } else {
             oldestDate = new Date(msgObj.createdAt)
             isSameDay = datesAreOnSameDay(oldestDate, this.state.oldestDate || new Date(null))
 
@@ -307,6 +292,7 @@ class Messanger extends React.Component {
     }
 
     typingStart = () => {
+        if (!this.props.socket) return
 
         if (this.typingTimeout !== undefined) clearTimeout(this.typingTimeout);
         else {
@@ -320,6 +306,7 @@ class Messanger extends React.Component {
     }
 
     typingStop = () => {
+        if (!this.props.socket) return
         this.props.socket.emit('typingStop', {
             to: this.props.match.params.id,
             from: localStorage.getItem('userID')
@@ -403,7 +390,7 @@ class Messanger extends React.Component {
                     </div>
 
 
-                    <SidebarOnline/>
+                    <SidebarOnline setResponsePreview={this.setResponsePreview}/>
 
                 </div>
 

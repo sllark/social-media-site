@@ -17,9 +17,9 @@ function Sidebar(props) {
                 console.log(error);
 
                 if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
+                    props.setResponsePreview("failed", error.response.data.message)
                 else
-                    this.props.setResponsePreview("failed", "Failed to load online friends...")
+                    props.setResponsePreview("failed", "Failed to load online friends...")
 
             })
 

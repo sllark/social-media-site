@@ -1,16 +1,16 @@
 import React from "react";
-import {j, Redirect} from "react-router-dom";
+import {Redirect} from "react-router-dom";
 
 import axios from "../helper/axios";
 
 import FillScreen from "../components/FillScreen";
-import Header from "../components/header/Header";
 import CreateNewPost from "../components/feed/CreateNewPost";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import FeedPost from "../components/feed/FeedPost";
 import Sidebar from "../components/general/Sidebar";
 import Loading from "../components/ui/Loading";
 import ShowResponse from "../components/ui/ShowResponse";
+import handleAxiosError from "../helper/handleAxiosError";
 
 class Profile extends React.Component {
 
@@ -75,18 +75,9 @@ class Profile extends React.Component {
 
             })
             .catch(error => {
-                console.log(error);
 
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Loading Failed...")
+                handleAxiosError(error,this.setResponsePreview,"Loading Failed...")
 
-            })
-            .then(() => {
-                this.setState({
-                    isLoading: false
-                })
             })
 
 
@@ -119,12 +110,7 @@ class Profile extends React.Component {
 
             })
             .catch(error => {
-                console.log(error);
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Loading Failed...")
-
+                handleAxiosError(error,this.setResponsePreview,"Loading Failed...")
             })
             .then(() => {
                 this.setState({
@@ -211,12 +197,7 @@ class Profile extends React.Component {
 
             })
             .catch(error => {
-                console.log(error);
-
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Loading Failed...")
+                handleAxiosError(error,this.setResponsePreview,"Failed to send request.")
 
             })
             .then(() => {
@@ -250,13 +231,8 @@ class Profile extends React.Component {
 
             })
             .catch(error => {
-                console.log(error);
 
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Loading Failed...")
-
+                handleAxiosError(error,this.setResponsePreview,"Failed to cancel request.")
 
             })
             .then(() => {
@@ -275,7 +251,6 @@ class Profile extends React.Component {
             responseStatus: status
         })
     }
-
 
 
     render() {
@@ -330,9 +305,9 @@ class Profile extends React.Component {
                                         this.props.match.params?.id === localStorage.getItem("userID") ?
                                             <CreateNewPost
                                                 placeholder={"write something..."}
-                                                token={localStorage.getItem("token")}
                                                 addNewPost={this.addNewPost}
                                                 setResponsePreview={this.setResponsePreview}
+                                                user={this.state.user}
                                             /> : null
                                     }
 

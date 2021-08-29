@@ -5,6 +5,7 @@ import timeDifference from "../../helper/timeDiff";
 
 import axios from "../../helper/axios";
 import configs from "../../assets/config/configs";
+import handleAxiosError from "../../helper/handleAxiosError";
 
 
 function Comment(props) {
@@ -20,12 +21,7 @@ function Comment(props) {
                 props.updateComment(props.ele._id, result.data.commentLikes)
             })
             .catch(error => {
-                console.log(error);
-
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Failed to like comment...")
+                handleAxiosError(error,this.props.setResponsePreview,"Failed to like comment...")
             })
 
     }

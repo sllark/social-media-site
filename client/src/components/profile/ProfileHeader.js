@@ -10,6 +10,7 @@ import AddBio from "./AddBio";
 import dataURLtoFile from "../../helper/dataURLtoFile";
 import configs from "../../assets/config/configs";
 import axios from "axios";
+import handleAxiosError from "../../helper/handleAxiosError";
 
 function ProfileHeader(props) {
 
@@ -120,13 +121,7 @@ function ProfileHeader(props) {
                 props.addNewPost(result.data.post)
             })
             .catch(error => {
-                console.log(error)
-
-                if (error.response)
-                    props.setResponsePreview("failed", error.response.data.message)
-                else
-                    props.setResponsePreview("failed", "Failed to update image.")
-
+                handleAxiosError(error,props.setResponsePreview,"Failed to  update image.")
             })
 
     }

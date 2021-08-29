@@ -20,7 +20,7 @@ function Message(props) {
         )
     }
 
-    let profilePic = props.profile.profilePicture;
+    let profilePic = props.profile?.profilePicture;
 
     if(profilePic)
         profilePic = configs.api_url+"/images/"+profilePic;
@@ -29,7 +29,7 @@ function Message(props) {
         <div className={props.msg.own ? "message own" : "message"} data-date={props.msg.createdAt}>
             <div className="message__body">
 
-                <Link to={"/profile/"+props.profile._id}>
+                <Link to={"/profile/"+props.profile?._id}>
                     <Avatar type="sm" url={profilePic}/>
                 </Link>
                 <pre

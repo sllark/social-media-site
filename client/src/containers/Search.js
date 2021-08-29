@@ -7,6 +7,7 @@ import Sidebar from "../components/general/Sidebar";
 import Person from "../components/profile/Person";
 import Loading from "../components/ui/Loading";
 import ShowResponse from "../components/ui/ShowResponse";
+import handleAxiosError from "../helper/handleAxiosError";
 
 
 class Search extends React.Component {
@@ -72,11 +73,7 @@ class Search extends React.Component {
             })
             .catch(error => {
                 console.log(error);
-
-                if (error.response)
-                    this.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.setResponsePreview("failed", "Loading Failed...")
+                handleAxiosError(error,this.setResponsePreview,"Loading Failed.")
 
             })
             .then(() => {

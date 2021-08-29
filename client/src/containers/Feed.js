@@ -1,10 +1,9 @@
 import React from "react";
 
 import axios from "../helper/axios";
-
+import handleAxiosError from "../helper/handleAxiosError";
 
 import FillScreen from "../components/FillScreen";
-import Header from "../components/header/Header";
 import CreateNewPost from "../components/feed/CreateNewPost";
 import FeedPost from "../components/feed/FeedPost";
 import Sidebar from "../components/general/Sidebar";
@@ -24,7 +23,11 @@ class Feed extends React.Component {
             maxPost: 1,
             isLoading: false,
             responseMsg: "",
-            responseStatus: ""
+            responseStatus: "",
+            user:{
+                firstName: ".",
+                lastName: "."
+            }
         }
 
         this.scrollEvent = null;
@@ -35,11 +38,37 @@ class Feed extends React.Component {
         this.scrollEvent = window.addEventListener('scroll', this.loadMore);
         this.getFeedPostsCount()
         this.loadFeedPosts()
+        this.getMyUser()
     }
 
     componentWillUnmount() {
         window.removeEventListener('scroll', this.loadMore);
     }
+
+    getMyUser = () => {
+        let id = localStorage.getItem('userID');
+
+        axios.get(
+            "/getUser",
+            {
+                params: {
+                    profileID: id,
+                }
+            })
+            .then(result => {
+
+                this.setState({
+                    user: result.data.user
+                })
+
+            })
+            .catch(error => {
+                handleAxiosError(error,this.setResponsePreview,"Loading Failed...")
+            })
+
+
+    }
+
 
     loadMore = (e) => {
 
@@ -78,13 +107,7 @@ class Feed extends React.Component {
 
             })
             .catch(error => {
-                console.log(error);
-
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Loading Failed...")
-
+                handleAxiosError(error,this.setResponsePreview,"Loading Failed...")
             })
             .then(() => {
                 this.setState({
@@ -103,13 +126,7 @@ class Feed extends React.Component {
 
             })
             .catch(error => {
-                console.log(error);
-
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Loading Failed...")
-
+                handleAxiosError(error,this.setResponsePreview,"Loading Failed...")
             })
     }
 
@@ -177,9 +194,9 @@ class Feed extends React.Component {
                     <div className="feed">
                         <CreateNewPost
                             placeholder={"write something..."}
-                            token={this.props.token}
                             addNewPost={this.addNewPost}
                             setResponsePreview={this.setResponsePreview}
+                            user={this.state.user}
                         />
 
                         {
@@ -203,7 +220,7 @@ class Feed extends React.Component {
 
                     </div>
 
-                    <SidebarOnline/>
+                    <SidebarOnline setResponsePreview={this.setResponsePreview}/>
 
                 </div>
 

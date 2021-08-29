@@ -1,4 +1,4 @@
-import React from "react";
+import React, {createRef} from "react";
 
 
 import Avatar from "../profile/Avatar";
@@ -14,6 +14,7 @@ import timeDifference from "../../helper/timeDiff";
 import {Link} from "react-router-dom";
 import configs from "../../assets/config/configs";
 import axios from "../../helper/axios";
+import handleAxiosError from "../../helper/handleAxiosError";
 
 class FeedPost extends React.Component {
 
@@ -22,6 +23,7 @@ class FeedPost extends React.Component {
         super(props);
 
         this.state = {
+            likes: [],
             likesNum: this.props.post.likes.count || 0,
             hasLiked: this.props.post.likes.likedByMe || false,
             commentsNum: this.props.post.comments.count,
@@ -29,11 +31,80 @@ class FeedPost extends React.Component {
             showComments: true,
             commentDisplayNum: 2,
             showLikesModal: false,
-            showImageModal: false
+            showImageModal: false,
+            loadingLikes: false
+        }
+
+        this.modalRef = createRef();
+    }
+
+    componentDidMount() {
+        this.loadLikes()
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+
+        if (prevState.showLikesModal !== this.state.showLikesModal) {
+
+            if (this.state.showLikesModal) {
+                this.modalRef.current.addEventListener('scroll', this.scrollModal)
+            } else {
+                this.setState({loadingLikes: false})
+            }
+
+
+        }
+
+
+    }
+
+    scrollModal = () => {
+
+        let obj = this.modalRef.current;
+        if (obj
+            && obj.scrollTop >= (obj.scrollHeight - obj.offsetHeight)
+            && this.state.likesNum !== this.state.likes.length
+            && !this.state.loadingLikes) {
+            this.loadLikes()
         }
 
     }
 
+
+    loadLikes = () => {
+        this.setState({loadingLikes:true})
+
+        axios.get(
+            "/getPostLikes",
+            {
+                params: {
+                    postID: this.props.post._id,
+                    likesLoaded: this.state.likes.length
+                }
+            }
+        )
+            .then(result => {
+
+
+                this.setState(
+                    (prevState) => {
+                        return {
+                            likes: [...prevState.likes, ...result.data.likes],
+                        }
+                    }
+                )
+                console.log(result.data.likes)
+
+            })
+            .catch(error => {
+                handleAxiosError(error, this.props.setResponsePreview, "Internal Server Error.")
+            })
+            .then(()=>{
+                this.setState({loadingLikes:false})
+            })
+
+
+    }
 
     likeClick = (e) => {
 
@@ -44,10 +115,6 @@ class FeedPost extends React.Component {
             }))
             .then(result => {
 
-                // if (result.data.message === "success")
-                //     this.props.setResponsePreview("success", "Liked Successfully...")
-                // else if (result.data.message === "like remove success")
-                //     this.props.setResponsePreview("success", "Removed Like Successfully...")
 
                 this.setState(
                     (prevState) => {
@@ -60,12 +127,7 @@ class FeedPost extends React.Component {
 
             })
             .catch(error => {
-                console.log(error);
-
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Internal Server Error.")
+                handleAxiosError(error, this.props.setResponsePreview, "Internal Server Error.")
             })
 
 
@@ -97,13 +159,7 @@ class FeedPost extends React.Component {
 
             })
             .catch(error => {
-                console.log(error);
-
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Internal Server Error.")
-
+                handleAxiosError(error, this.props.setResponsePreview, "Internal Server Error.")
             })
 
 
@@ -147,15 +203,10 @@ class FeedPost extends React.Component {
                 }
 
 
-
             })
             .catch(error => {
-                console.log(error);
 
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Internal Server Error.")
+                handleAxiosError(error, this.props.setResponsePreview, "Internal Server Error.")
 
             })
 
@@ -180,15 +231,9 @@ class FeedPost extends React.Component {
                 }
 
 
-
             })
             .catch(error => {
-                console.log(error);
-
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Internal Server Error.")
+                handleAxiosError(error, this.props.setResponsePreview, "Internal Server Error.")
 
             })
 
@@ -404,18 +449,15 @@ class FeedPost extends React.Component {
                     this.state.showLikesModal ?
                         <Modal
                             showModal={this.state.showLikesModal}
-                            changeShowModal={value => this.setState({showLikesModal: value})}>
+                            changeShowModal={value => this.setState({showLikesModal: value})} modalRef={this.modalRef}>
 
                             <h2>People who liked the post</h2>
 
-                            <div className="modalBody">
+                            <div className="modalBody flex-start">
 
-                                <NameDisplay isActive={true} name="AbdulRehman"/>
-                                <NameDisplay isActive={false} name="Kainat Yousaf"/>
-                                <NameDisplay isActive={true} name="Rana Numan"/>
-                                <NameDisplay isActive={true} name="Kashif Abassi"/>
-                                <NameDisplay isActive={false} name="Imran Amjad"/>
-                                <NameDisplay isActive={true} name="Ali Nawaz"/>
+                                {
+                                    this.state.likes.map(user=><NameDisplay key={user._id} user={user}/>)
+                                }
 
                             </div>
 

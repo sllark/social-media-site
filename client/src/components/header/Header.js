@@ -12,11 +12,12 @@ import logo from '../../assets/img/logo-icon.png'
 import {ReactComponent as LogoutIcon} from '../../assets/img/svg/exit.svg'
 import {ReactComponent as NotificationIcon} from '../../assets/img/svg/bell.svg'
 import {ReactComponent as SearchIcon} from '../../assets/img/svg/search.svg'
+import handleAxiosError from "../../helper/handleAxiosError";
 
 
 function Header(props) {
 
-    const [queryValue, changeQueryValue] = useState("da");
+    const [queryValue, changeQueryValue] = useState("");
     const [isFocused, changeFocused] = useState(false);
     const [redirect, changeRedirect] = useState(null);
     const [notifiPopup, setNotifiPopup] = useState(false);
@@ -31,7 +32,7 @@ function Header(props) {
         document.addEventListener('keyup', searchOnEnter)
         getNotifications();
         let query = getQuery(props.history.location.search);
-        changeQueryValue(query);
+        changeQueryValue(query || "");
 
         return () => {
             document.removeEventListener('keyup', searchOnEnter)
@@ -61,12 +62,7 @@ function Header(props) {
                 setNotifications(result.data.notifications)
             })
             .catch(error => {
-                console.log(error);
-
-                if (error.response)
-                    setResponsePreview("failed", error.response.data.message)
-                else
-                    setResponsePreview("failed", "Notifications Loading Failed...")
+                handleAxiosError(error, setResponsePreview, "Notifications Loading Failed...")
             })
 
     }
@@ -82,7 +78,7 @@ function Header(props) {
         return <Redirect to={redirect}/>
     }
 
-    const getQuery = (locationQuery)=>{
+    const getQuery = (locationQuery) => {
         let params = new URLSearchParams(locationQuery);
         return params.get('q');
     }
@@ -146,9 +142,9 @@ function Header(props) {
 
                             {
                                 notifiPopup ?
-                                    <NotificationPopup notifications={notifications}
-                                                       setResponsePreview={setResponsePreview}/>
-
+                                    <NotificationPopup
+                                        notifications={notifications}
+                                        setResponsePreview={setResponsePreview}/>
                                     : null
 
                             }

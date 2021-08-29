@@ -5,6 +5,7 @@ import timeDifference from "../../helper/timeDiff";
 import Avatar from "../profile/Avatar";
 import configs from "../../assets/config/configs";
 import axios from "../../helper/axios";
+import handleAxiosError from "../../helper/handleAxiosError";
 
 
 function NotificationPopup(props) {
@@ -25,12 +26,7 @@ function NotificationPopup(props) {
                     setReqAccepted(true)
             })
             .catch(error => {
-                console.log(error);
-
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Could not accept request right now.")
+                handleAxiosError(error, props.setResponsePreview, "Could not accept request right now.")
             })
 
 
@@ -47,12 +43,8 @@ function NotificationPopup(props) {
                     setReqDeclined(true)
             })
             .catch(error => {
-                console.log(error);
+                handleAxiosError(error, props.setResponsePreview, "Could not decline request right now.")
 
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Could not decline request right now.")
             })
 
 

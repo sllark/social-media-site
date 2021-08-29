@@ -8,6 +8,8 @@ import NameDisplay from "../ui/NameDisplay";
 import ImageUploader from "../general/ImageUploader";
 
 import dataURLtoFile from "../../helper/dataURLtoFile"
+import handleAxiosError from "../../helper/handleAxiosError";
+import avatar from "../../assets/img/personAvatar.svg";
 
 
 function CreateNewPost(props) {
@@ -54,13 +56,8 @@ function CreateNewPost(props) {
                 setClearImage(true);
             })
             .catch(error => {
-                console.log(error)
+                handleAxiosError(error,props.setResponsePreview,"Loading Failed...")
 
-
-                if (error.response)
-                    props.setResponsePreview("failed", error.response.data.message)
-                else
-                    props.setResponsePreview("failed", "Loading Failed...")
             })
             .then(()=>{
                 setShowModal(false);
@@ -70,6 +67,8 @@ function CreateNewPost(props) {
 
     }
 
+    let avatarSrc = "";
+    if (props.user.profilePicture) avatarSrc = configs.api_url + "/images/" + props.user.profilePicture;
 
     return (
         <>
@@ -77,7 +76,7 @@ function CreateNewPost(props) {
 
                 <div className="createNewPost__front d-flex">
 
-                    <Avatar/>
+                    <Avatar isActive={true} url={avatarSrc || ""}/>
                     <input type="text"
                            value={postText}
                            placeholder={props.placeholder}
@@ -106,7 +105,7 @@ function CreateNewPost(props) {
                 <h2>Create Post</h2>
                 <div className="modalBody">
 
-                    <NameDisplay isActive={true} name="AbdulRehman"/>
+                    <NameDisplay user={props.user}/>
                     <textarea
                         ref={inputEl}
                         placeholder={props.placeholder}

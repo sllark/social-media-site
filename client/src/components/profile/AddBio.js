@@ -2,6 +2,7 @@ import React, {useState} from "react";
 import Loading from "../ui/Loading";
 
 import axios from "../../helper/axios";
+import handleAxiosError from "../../helper/handleAxiosError";
 
 function AddBio(props) {
 
@@ -30,13 +31,7 @@ function AddBio(props) {
 
             })
             .catch(error => {
-                console.log(error)
-
-                if (error.response)
-                    this.props.setResponsePreview("failed", error.response.data.message)
-                else
-                    this.props.setResponsePreview("failed", "Failed to update bio...")
-
+                handleAxiosError(error,props.setResponsePreview,"Failed to update bio...")
             })
             .then(()=>{
                 setLoading(false);
