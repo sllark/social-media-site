@@ -31,7 +31,7 @@ const User = new Schema({
     },
     isOnline: {
         type: Boolean,
-        default:false
+        default: false
     },
     posts: [
         {
@@ -65,6 +65,49 @@ const User = new Schema({
     ]
 
 })
+
+User.index({firstName: 'text', lastName: 'text'});
+
+
+User.statics = {
+
+    searchPartial: function (q, skip, callback) {
+        return this.find(
+            {
+                $or: [
+                    {"firstName": new RegExp(q, "gi")},
+                    {"lastName": new RegExp(q, "gi")},
+                ],
+            },
+            "firstName lastName profilePicture bio dob gender isOnline",
+            {
+                limit: 20,
+                skip: skip
+            },
+            callback);
+    },
+
+    searchFull: function (q, skip, callback) {
+        return this.find(
+            {$text: {$search: q, $caseSensitive: false}},
+            "firstName lastName profilePicture bio dob gender isOnline",
+            {
+                limit: 20,
+                skip: skip,
+                sort: {score: {$meta: "textScore"}}
+            },
+            callback
+        )
+    },
+
+    search: function (q, skip = 0, callback) {
+        this.searchFull(q, skip, (err, data) => {
+            if (err) return callback(err, data);
+            if (!err && data.length) return callback(err, data);
+            if (!err && data.length === 0) return this.searchPartial(q, skip, callback);
+        });
+    },
+}
 
 
 module.exports = model('User', User)

@@ -15,6 +15,7 @@ const Notification = new Schema({
         //- comment
         //- like
         //- commentLike
+        //- share
         type: String,
         required: true
     },

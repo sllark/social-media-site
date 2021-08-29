@@ -37,7 +37,7 @@ router.post('/login',
                 .then(fetchedUser => {
 
                     if (!fetchedUser)
-                        return Promise.reject('Email doesn\'t exist');
+                        return Promise.reject('Email or Password does not match.');
                     else
                         return true;
                 })

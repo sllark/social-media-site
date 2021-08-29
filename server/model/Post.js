@@ -20,6 +20,9 @@ const Post = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'User',
     },
+    originalPostedTime: { //if post is shared, then set it to original post's creation time
+        type: Date,
+    },
     likes: {
         type: {
             count: {

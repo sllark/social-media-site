@@ -9,6 +9,8 @@ const getSocket = require('./helper/socket')
 
 const authRoutes = require('./routes/authRoutes')
 const postRoutes = require('./routes/postRoutes')
+const profileRoutes = require('./routes/profileRoutes')
+const messageRoutes = require('./routes/messageRoutes')
 
 
 
@@ -42,12 +44,14 @@ app.use((req, res, next) => {
 
 
 app.get('/', (req, res, next) => {
-    console.log(getSocket.getIO());
+    // console.log(getSocket.getIO());
     res.json({message: 'hello'});
 
 })
 app.use(authRoutes)
 app.use(postRoutes)
+app.use(profileRoutes)
+app.use(messageRoutes)
 
 
 app.use((error, req, res, next) => {
