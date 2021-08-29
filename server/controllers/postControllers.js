@@ -14,7 +14,6 @@ const getChatID = require('../helper/getChatID');
 
 
 exports.createPost = async (req, res, next) => {
-    //TODO: req.body.postText !== ""
 
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
@@ -71,19 +70,14 @@ exports.createPost = async (req, res, next) => {
 exports.deletePost = async (req, res, next) => {
 
     //TODO: delete image of the related post (make updated for shared posts images)
-    //TODO: verify post ID
-
 
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
         let errors = validation.array();
-
-        console.log(errors);
         const error = new Error(errors[0].msg);
         error.statusCode = 422;
         error.errors = errors;
         throw error;
-
     }
 
     let postID = req.body.postID;
@@ -114,8 +108,16 @@ exports.deletePost = async (req, res, next) => {
 }
 
 
-exports.getPosts = async (req, res, next) => {
-    //TODO: check if req.query.profileID is valid id
+exports.getProfilePosts = async (req, res, next) => {
+
+    const validation = validationResult(req)
+    if (!validation.isEmpty()) {
+        let errors = validation.array()
+        const error = new Error(errors[0].msg);
+        error.statusCode = 422;
+        error.errors = errors;
+        return next(error);
+    }
 
 
     let max = 5,
@@ -161,11 +163,12 @@ exports.getPosts = async (req, res, next) => {
 
     let likeIndex = -1;
     posts.forEach(post => {
+        post.toObject();
         likeIndex = -1;
         likeIndex = post.likes.by.findIndex(id => id.toString() === req.user.userID.toString())
         post.likes.likedByMe = likeIndex >= 0
+        delete post.likes.by;
     })
-
 
     res.status(200).json({
         "message": "success",
@@ -178,13 +181,22 @@ exports.getPosts = async (req, res, next) => {
 
 exports.likePost = async (req, res, next) => {
 
-    //TODO: verify post ID
+    const validation = validationResult(req)
+    if (!validation.isEmpty()) {
+        let errors = validation.array()
+        const error = new Error(errors[0].msg);
+        error.statusCode = 422;
+        error.errors = errors;
+        return next(error);
+    }
+
 
     let postID = req.body.postID,
         userID = req.user.userID,
         postAuthor = null,
         myUser = null,
         originalPost = null;
+
 
     originalPost = await Post.findById(postID)
 
@@ -262,13 +274,26 @@ exports.likePost = async (req, res, next) => {
 
 
 exports.sharePost = async (req, res, next) => {
+    const validation = validationResult(req)
+    if (!validation.isEmpty()) {
+        let errors = validation.array()
+        const error = new Error(errors[0].msg);
+        error.statusCode = 422;
+        error.errors = errors;
+        return next(error);
+    }
 
-    //TODO: verify post ID
 
     let postID = req.body.postID,
         userID = req.user.userID;
 
     let originalPost = await Post.findById(postID)
+
+    if (originalPost.user.toString() === userID) {
+        return next(new Error("Cannot share your own post."))
+    }
+
+
     let user = await User.findById(userID)
     let postAuthor = await User.findById(originalPost.user);
 
@@ -326,7 +351,15 @@ exports.sharePost = async (req, res, next) => {
 
 exports.commentPost = async (req, res, next) => {
 
-    //TODO: verify post ID and comment !== ""
+    const validation = validationResult(req)
+    if (!validation.isEmpty()) {
+        let errors = validation.array()
+        const error = new Error(errors[0].msg);
+        error.statusCode = 422;
+        error.errors = errors;
+        return next(error);
+    }
+
 
     let postID = req.body.postID,
         commentValue = req.body.value;
@@ -407,10 +440,19 @@ exports.commentPost = async (req, res, next) => {
 
 exports.likeComment = async (req, res, next) => {
 
-    //TODO: validate commentID
+    const validation = validationResult(req)
+    if (!validation.isEmpty()) {
+        let errors = validation.array()
+        const error = new Error(errors[0].msg);
+        error.statusCode = 422;
+        error.errors = errors;
+        return next(error);
+    }
+
 
     let {commentID} = req.body;
-    let userID = req.user.userID, comment, commentAuthor, myUser;
+    let userID = req.user.userID,
+        comment, commentAuthor, myUser;
 
 
     comment = await CommentBy.findById(commentID).exec()
@@ -492,6 +534,112 @@ exports.likeComment = async (req, res, next) => {
     res.status(200).json({
         "message": "success",
         commentLikes: comment.likes
+    });
+
+}
+
+
+exports.getFeedPosts = async (req, res, next) => {
+
+    const validation = validationResult(req)
+    if (!validation.isEmpty()) {
+        let errors = validation.array()
+        const error = new Error(errors[0].msg);
+        error.statusCode = 422;
+        error.errors = errors;
+        return next(error);
+    }
+
+    let max = 5,
+        skip = Number(req.query.postsLoaded) || 0;
+
+    let user = await User.findById(req.user.userID)
+    let posts = await Post.find(
+        {
+            $or: [{user: {$in: user.friends}}, {user: user._id}]
+        }
+    )
+        .sort({_id: -1})
+        .limit(max)
+        .skip(skip)
+        .populate('user', 'firstName lastName profilePicture')
+        .populate({
+            path: 'comments.by',
+            model: 'CommentBy',
+            populate: {
+                path: 'person',
+                select: 'firstName lastName profilePicture',
+                model: 'User'
+            }
+        })
+        .populate({
+            path: 'sharedFrom',
+            model: 'User',
+            select: 'firstName lastName profilePicture'
+        })
+
+    let likeIndex = -1;
+    posts.forEach(post => {
+        likeIndex = -1;
+        likeIndex = post.likes.by.findIndex(id => id.toString() === req.user.userID.toString())
+        post.likes.likedByMe = likeIndex >= 0
+    })
+
+
+    res.status(200).json({
+        "message": "success",
+        posts: posts,
+    });
+
+}
+
+
+exports.getFeedPostsCount = async (req, res, next) => {
+    const validation = validationResult(req)
+    if (!validation.isEmpty()) {
+        let errors = validation.array()
+        const error = new Error(errors[0].msg);
+        error.statusCode = 422;
+        error.errors = errors;
+        return next(error);
+    }
+
+
+    let user = await User.findById(req.user.userID)
+    let maxPost = await Post.countDocuments({
+        $or: [{user: {$in: user.friends}}, {user: user._id}]
+    })
+
+    res.status(200).json({
+        "message": "success",
+        max: maxPost
+    });
+
+}
+
+
+exports.getPostLikes = async (req, res, next) => {
+
+    let max = 15,
+        skip = Number(req.query.likesLoaded) || 0;
+
+
+    let user = await Post.findById(req.query.postID)
+        .select('likes')
+        .populate({
+            path: 'likes.by',
+            options: {
+                sort: {_id: -1},
+                skip: skip,
+                limit: max
+            },
+            model: 'User',
+            select: 'firstName lastName profilePicture isOnline'
+        })
+
+    res.status(200).json({
+        "message": "success",
+        likes: user.likes.by
     });
 
 }

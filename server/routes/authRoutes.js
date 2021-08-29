@@ -1,5 +1,6 @@
 const express = require('express');
 const {body} = require('express-validator')
+const asyncHandler = require('express-async-handler')
 
 const User = require('../model/User')
 const authController = require('../controllers/authControllers')
@@ -23,10 +24,9 @@ router.post('/signup',
         body('firstName').not().isEmpty().isLength({min: 1}).withMessage('First Name not found.'),
         body('lastName').not().isEmpty().isLength({min: 1}).withMessage('Last Name not found.'),
         body('dob').not().isEmpty().isLength({min: 1}).withMessage('Date of Birth not found.'),
-        body('gender').not().isEmpty().isLength({min: 1}).withMessage('Gender not found.'),
-
+        body('gender').not().isEmpty().isLength({min: 1}).withMessage('Gender not found.')
     ]
-    , authController.signup)
+    , asyncHandler(authController.signup))
 
 
 router.post('/login',
@@ -43,6 +43,6 @@ router.post('/login',
                 })
         }).normalizeEmail(),
         body('password').not().isEmpty().isLength({min: 6}).withMessage('Password too short.')
-    ], authController.login)
+    ], asyncHandler(authController.login))
 
 module.exports = router;

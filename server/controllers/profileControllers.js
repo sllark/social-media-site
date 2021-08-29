@@ -8,7 +8,16 @@ const Notification = require('../model/Notification');
 
 
 exports.getUser = async (req, res, next) => {
-    //TODO: check if req.query.profileID is valid id
+
+    const validation = validationResult(req)
+    if (!validation.isEmpty()) {
+        let errors = validation.array()
+        const error = new Error(errors[0].msg);
+        error.statusCode = 422;
+        error.errors = errors;
+        return next(error);
+    }
+
 
     let userID = req.user.userID
 
@@ -42,7 +51,16 @@ exports.getUser = async (req, res, next) => {
 }
 
 exports.getSearchUsers = async (req, res, next) => {
-    //TODO: check if req.query.profileID is valid id
+
+    const validation = validationResult(req)
+    if (!validation.isEmpty()) {
+        let errors = validation.array()
+        const error = new Error(errors[0].msg);
+        error.statusCode = 422;
+        error.errors = errors;
+        return next(error);
+    }
+
 
     let query = req.query.queryString,
         userLoaded = Number(req.query.userLoaded) || 0
@@ -50,6 +68,8 @@ exports.getSearchUsers = async (req, res, next) => {
     // let user = await User.find({$text: {$search: `${query}`}}).sort( { score: { $meta: "textScore" } } )
 
     User.search(query,userLoaded, function(err, data) {
+
+        if (err) return next(err);
 
         res.status(200).json({
             "message": "success",
@@ -62,10 +82,17 @@ exports.getSearchUsers = async (req, res, next) => {
 
 exports.getProfileDetails = async (req, res, next) => {
 
-    //TODO: validate req.query.profileID
+    const validation = validationResult(req)
+    if (!validation.isEmpty()) {
+        let errors = validation.array()
+        const error = new Error(errors[0].msg);
+        error.statusCode = 422;
+        error.errors = errors;
+        return next(error);
+    }
 
     let user = await User.findById(req.query.profileID)
-        .select("firstName lastName profilePicture")
+        .select("firstName lastName profilePicture isOnline")
 
     res.status(200).json({
         "message": "success",
@@ -78,20 +105,20 @@ exports.updateProfilePic = async (req, res, next) => {
 
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
-        let errors = validation.array();
-
+        let errors = validation.array()
         const error = new Error(errors[0].msg);
         error.statusCode = 422;
         error.errors = errors;
-        return  next(error);
+        return next(error);
     }
+
 
     let postImage = "";
     if (req.file) postImage = req.file.filename
 
     if (!postImage)
-        res.status(500).json({
-            "message": "failed",
+        return res.status(404).json({
+            "message": "Image not found",
         });
 
     let user = await User.findById(req.user.userID)
@@ -118,7 +145,7 @@ exports.updateProfilePic = async (req, res, next) => {
     await newPost.populate({
         path: 'user',
         model: 'User',
-        select: "firstName lastName profilePicture"
+        select: "firstName lastName profilePicture isOnline"
     }).execPopulate();
 
 
@@ -147,8 +174,8 @@ exports.updateCoverPic = async (req, res, next) => {
     if (req.file) postImage = req.file.filename
 
     if (!postImage)
-        res.status(500).json({
-            "message": "failed",
+        return res.status(404).json({
+            "message": "Image not found",
         });
 
     let user = await User.findById(req.user.userID)
@@ -178,7 +205,7 @@ exports.updateCoverPic = async (req, res, next) => {
     await newPost.populate({
         path: 'user',
         model: 'User',
-        select: "firstName lastName profilePicture"
+        select: "firstName lastName profilePicture isOnline"
     }).execPopulate();
 
 
@@ -195,15 +222,16 @@ exports.addBio = async (req, res, next) => {
 
     //TODO: req.body.bio !==""
 
+
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
-        let errors = validation.array();
-
+        let errors = validation.array()
         const error = new Error(errors[0].msg);
         error.statusCode = 422;
         error.errors = errors;
-        throw error;
+        return next(error);
     }
+
 
     let bio = req.body.bio;
 
@@ -213,7 +241,7 @@ exports.addBio = async (req, res, next) => {
     await user.save();
 
     res.status(200).json({
-        "message": "success 122",
+        "message": "success",
         bio: user.bio,
     });
 
@@ -221,12 +249,9 @@ exports.addBio = async (req, res, next) => {
 
 
 exports.sendFriendReq = async (req, res, next) => {
-    //TODO: check if req.body.userID is valid id
-
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
         let errors = validation.array();
-
         const error = new Error(errors[0].msg);
         error.statusCode = 422;
         error.errors = errors;
@@ -242,11 +267,10 @@ exports.sendFriendReq = async (req, res, next) => {
     let reqSentIndex = myUser.friendRequestsSent.findIndex(id => otherUserId === id);
 
     if (reqSentIndex >= 0) {
-        res.status(200).json({
+        return res.status(200).json({
             "message": "failed",
             "errorMessage": "Request already sent",
         });
-        return
     }
 
     otherUser = await User.findById(otherUserId)
@@ -277,7 +301,6 @@ exports.sendFriendReq = async (req, res, next) => {
 
 
 exports.cancelFriendReq = async (req, res, next) => {
-    //TODO: check if req.body.userID is valid id
 
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
@@ -298,11 +321,10 @@ exports.cancelFriendReq = async (req, res, next) => {
     reqSentIndex = myUser.friendRequestsSent.findIndex(id => otherUserId.toString() === id.toString());
 
     if (reqSentIndex < 0) {
-        res.status(500).json({
+        return res.status(404).json({
             "message": "failed",
             "errorMessage": "No Request to cancel",
         });
-        return
     }
 
     otherUser = await User.findById(otherUserId)
@@ -341,7 +363,6 @@ exports.cancelFriendReq = async (req, res, next) => {
 exports.acceptFriendReq = async (req, res, next) => {
 
     //TODO: add notification to the user whom request is accepted
-    //TODO: validate req.body.userID
 
 
     const validation = validationResult(req)
@@ -366,11 +387,10 @@ exports.acceptFriendReq = async (req, res, next) => {
     reqSentIndex = otherUser.friendRequestsSent.findIndex(id => myUserId.toString() === id.toString());
 
     if (reqSentIndex < 0) {
-        res.status(500).json({
+       return  res.status(404).json({
             "message": "failed",
-            "errorMessage": "You have no friend request to accept"
+            "errorMessage": "No friend request of the user to accept."
         });
-        return
     }
 
     myUser.friendRequests.splice(reqIndex, 1);
@@ -408,7 +428,6 @@ exports.acceptFriendReq = async (req, res, next) => {
 
 exports.declineFriendReq = async (req, res, next) => {
 
-    //TODO: validate req.body.userID
 
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
@@ -432,11 +451,11 @@ exports.declineFriendReq = async (req, res, next) => {
     reqSentIndex = otherUser.friendRequestsSent.findIndex(id => myUserId.toString() === id.toString());
 
     if (reqSentIndex < 0) {
-        res.status(200).json({
+        return res.status(200).json({
             "message": "failed",
-            "errorMessage": "You have no friend request to decline.",
+            "errorMessage": "No friend request of user to decline.",
         });
-        return
+
     }
 
     myUser.friendRequests.splice(reqIndex, 1);
@@ -479,7 +498,6 @@ exports.getNotifications = async (req, res, next) => {
     let userID = req.user.userID
 
     let user = await User.findById(userID).select('notifications')
-    // .select("firstName lastName profilePicture coverPicture bio dob gender friends friendRequests")
 
 
     user = await user.populate({
@@ -500,67 +518,6 @@ exports.getNotifications = async (req, res, next) => {
     });
 }
 
-
-exports.getFeedPosts = async (req, res, next) => {
-
-
-    let max = 5,
-        skip = Number(req.query.postsLoaded);
-
-    let user = await User.findById(req.user.userID)
-    let posts = await Post.find(
-        {
-            $or: [{user: {$in: user.friends}}, {user: user._id}]
-        }
-    )
-        .sort({_id: -1})
-        .limit(max)
-        .skip(skip)
-        .populate('user', 'firstName lastName profilePicture')
-        .populate({
-            path: 'comments.by',
-            model: 'CommentBy',
-            populate: {
-                path: 'person',
-                select: 'firstName lastName profilePicture',
-                model: 'User'
-            }
-        })
-        .populate({
-            path: 'sharedFrom',
-            model: 'User',
-            select: 'firstName lastName profilePicture'
-        })
-
-    let likeIndex = -1;
-    posts.forEach(post => {
-        likeIndex = -1;
-        likeIndex = post.likes.by.findIndex(id => id.toString() === req.user.userID.toString())
-        post.likes.likedByMe = likeIndex >= 0
-    })
-
-
-    res.status(200).json({
-        "message": "success",
-        posts: posts,
-    });
-
-}
-
-exports.getFeedPostsCount = async (req, res, next) => {
-
-
-    let user = await User.findById(req.user.userID)
-    let maxPost = await Post.countDocuments({
-        $or: [{user: {$in: user.friends}}, {user: user._id}]
-    })
-
-    res.status(200).json({
-        "message": "success",
-        max: maxPost
-    });
-
-}
 
 exports.getOnlineFriends = async (req, res, next) => {
 
@@ -601,7 +558,7 @@ exports.getFriends = async (req, res, next) => {
                 limit: 20,
                 skip:skip
             },
-            select: "firstName lastName profilePicture bio gender",
+            select: "firstName lastName profilePicture bio gender isOnline",
             model: "User"
         })
 

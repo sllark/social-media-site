@@ -92,7 +92,7 @@ class Profile extends React.Component {
         })
 
         axios.get(
-            "/getPosts",
+            "/getProfilePosts",
             {
                 params: {
                     profileID: id,

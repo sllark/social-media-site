@@ -6,7 +6,12 @@ const getChatID = require('../helper/getChatID');
 
 
 exports.getMessages = async (req, res, next) => {
-    //TODO: req.user.userID === req.query.from otherwise throw unauth task error
+
+    if (req.user.userID.toString() !== req.query.from.toString()){
+        const error = new Error("Unauthorized to get messages.");
+        error.statusCode = 401;
+        return next(error);
+    }
 
     let chatID = getChatID(req.query.to, req.query.from);
     let max = 15,
@@ -19,12 +24,6 @@ exports.getMessages = async (req, res, next) => {
         .limit(max)
         .skip(skip)
 
-
-    // let user = await User.findById(req.user.userID)
-    // let maxPost = await Post.countDocuments({
-    //     $or: [{user: {$in: user.friends}}, {user: user._id}]
-    // })
-
     res.status(200).json({
         "message": "success",
         messages: messages
@@ -35,7 +34,11 @@ exports.getMessages = async (req, res, next) => {
 
 exports.getMessagesCount = async (req, res, next) => {
 
-    //TODO: req.user.userID === req.query.from otherwise throw unauth task error
+    if (req.user.userID.toString() !== req.query.from.toString()){
+        const error = new Error("Unauthorized to get messages count.");
+        error.statusCode = 401;
+        return next(error);
+    }
 
     let chatID = getChatID(req.query.to, req.query.from);
     let max = await Message.countDocuments({chatID: chatID});

@@ -1,44 +1,48 @@
 const express = require('express');
-const {body} = require('express-validator')
+const {body,check} = require('express-validator')
+const asyncHandler = require('express-async-handler')
+
 
 const {isAuth} = require('../helper/isAuth')
+const validateObjectID = require('../helper/validateObjectID')
 const profileControllers = require('../controllers/profileControllers')
 
 const router = express.Router();
 
 
+router.get('/getUser', isAuth, validateObjectID("profileID"), asyncHandler(profileControllers.getUser))
 
-// profile controllers
-router.get('/getUser', isAuth, profileControllers.getUser)
+router.get('/getSearchUsers', isAuth, [check('queryString').notEmpty()], asyncHandler(profileControllers.getSearchUsers))
 
-router.get('/getSearchUsers', isAuth, profileControllers.getSearchUsers)
+router.get('/getProfileDetails', isAuth, validateObjectID("profileID"), asyncHandler(profileControllers.getProfileDetails))
 
-router.get('/getProfileDetails', isAuth, profileControllers.getProfileDetails)
+router.post('/updateProfilePic', isAuth, asyncHandler(profileControllers.updateProfilePic))
 
-router.post('/updateProfilePic', isAuth, profileControllers.updateProfilePic)
+router.post('/updateCoverPic', isAuth, asyncHandler(profileControllers.updateCoverPic))
 
-router.post('/updateCoverPic', isAuth, profileControllers.updateCoverPic)
+router.post('/addBio', isAuth, [body('bio').notEmpty()], asyncHandler(profileControllers.addBio))
 
-router.post('/addBio', isAuth, profileControllers.addBio)
+router.post('/sendFriendReq', isAuth, validateObjectID("userID"),
+    [body("userID").custom((id, {req}) => {
+        if (id === req.user.userID.toString())
+            throw new Error('You cannot send Friend Request to yourself.');
+        else
+            return true;
+    })],
+    asyncHandler(profileControllers.sendFriendReq))
 
-router.post('/sendFriendReq', isAuth, profileControllers.sendFriendReq)
+router.post('/cancelFriendReq', isAuth, validateObjectID("userID"), asyncHandler(profileControllers.cancelFriendReq))
 
-router.post('/cancelFriendReq', isAuth, profileControllers.cancelFriendReq)
+router.post('/acceptFriendReq', isAuth, validateObjectID("userID"), asyncHandler(profileControllers.acceptFriendReq))
 
-router.post('/acceptFriendReq', isAuth, profileControllers.acceptFriendReq)
+router.post('/declineFriendReq', isAuth, validateObjectID("userID"), asyncHandler(profileControllers.declineFriendReq))
 
-router.post('/declineFriendReq', isAuth, profileControllers.declineFriendReq)
+router.get('/getNotifications', isAuth, asyncHandler(profileControllers.getNotifications))
 
-router.get('/getNotifications', isAuth, profileControllers.getNotifications)
+router.get('/getOnlineFriends', isAuth, asyncHandler(profileControllers.getOnlineFriends))
 
-router.get('/getFeedPosts', isAuth, profileControllers.getFeedPosts)
+router.get('/getFriends', isAuth, asyncHandler(profileControllers.getFriends))
 
-router.get('/getFeedPostsCount', isAuth, profileControllers.getFeedPostsCount)
-
-router.get('/getOnlineFriends', isAuth, profileControllers.getOnlineFriends)
-
-router.get('/getFriends', isAuth, profileControllers.getFriends)
-
-router.get('/getFriendsCount', isAuth, profileControllers.getFriendsCount)
+router.get('/getFriendsCount', isAuth, asyncHandler(profileControllers.getFriendsCount))
 
 module.exports = router;
