@@ -1,11 +1,17 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import SidebarOnlineItem from "./SidebarOnlineItem";
 import axios from "../../helper/axios";
+import ShowResponse from "../ui/ShowResponse";
+import useOutsideAlerter from "../../helper/useOutsideAlerter";
 
-function Sidebar(props) {
+function SidebarOnline(props) {
+    const wrapperRef = useRef(null);
 
     const [sidebar, setSidebar] = useState(false)
     const [sidebarItems, setSidebarItems] = useState([])
+
+    const [responseStatus, setResponseStatus] = useState("");
+    const [responseMsg, setResponseMsg] = useState("");
 
     useEffect(() => {
 
@@ -17,39 +23,67 @@ function Sidebar(props) {
                 console.log(error);
 
                 if (error.response)
-                    props.setResponsePreview("failed", error.response.data.message)
+                    setResponsePreview("failed", error.response.data.message)
                 else
-                    props.setResponsePreview("failed", "Failed to load online friends...")
+                    setResponsePreview("failed", "Failed to load online friends...")
 
             })
 
     }, [])
 
+
+    useOutsideAlerter(wrapperRef, () => {
+        props.showMenu(false)
+    }, '.hamburgerMenuRight');
+
+    const setResponsePreview = (status, msg) => {
+        setResponseMsg(msg)
+        setResponseStatus(status)
+    }
     return (
 
-        <div
-            className={
-                "sidebar sidebarOnline" +
-                (sidebar ? " scrollbarVisible" : "")
+        <>
+            {responseStatus !== "" ?
+                <ShowResponse
+                    status={responseStatus}
+                    message={responseMsg}
+                    hideMe={() => setResponseStatus("")}
+                />
+                : null
             }
-            onMouseEnter={event => setSidebar(true)}
-            onMouseLeave={event => setSidebar(false)}
-        >
 
-            <div className="sidebar__container">
 
-                <h2 className="sidebarHeading">Contacts</h2>
+            <div
+                className={
+                    "sidebar sidebarOnline" +
+                    (sidebar ? " scrollbarVisible" : "") +
+                    (props.isVisible ? " showSidebar" : "")+
+                    (props.hideSidebarLG ? " hideSidebarLG" : "")
+                }
+                onMouseEnter={event => setSidebar(true)}
+                onMouseLeave={event => setSidebar(false)}
+                ref={wrapperRef}
+            >
 
-                {sidebarItems.map((item, index) => {
-                    return <SidebarOnlineItem
-                        key={item._id}
-                        item={item}/>
-                })}
+                <div className="sidebar__container">
+
+                    <h2 className="sidebarHeading">Contacts</h2>
+
+                    {sidebarItems.map((item, index) => {
+                        return <SidebarOnlineItem
+                            key={item._id}
+                            item={item}
+                            showSidebar={props.showMenu}
+                        />
+                    })}
+
+                </div>
+
 
             </div>
 
+        </>
 
-        </div>
 
     )
 
@@ -57,4 +91,4 @@ function Sidebar(props) {
 }
 
 
-export default Sidebar;
+export default SidebarOnline;

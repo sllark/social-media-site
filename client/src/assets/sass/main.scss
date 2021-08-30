@@ -9,44 +9,43 @@
 
 
 
+@import "components/addBio";
+@import "components/avatar";
 
-@import "components/fillScreen";
-@import "components/form";
 @import "components/btn";
-
-
-@import "components/notificationPopup";
-
-@import "components/sidebar";
 
 @import "components/createNewPost";
 
 @import "components/feed";
 @import "components/feedPost";
 @import "components/feedPostOption";
-@import "components/textEditor";
-@import "components/postComment";
+@import "components/fillScreen";
+@import "components/form";
 
-@import "components/avatarSm";
+@import "components/imageUploader";
+@import "components/loading";
+@import "components/message";
+@import "components/modal";
 @import "components/nameDisplay";
-
-@import "components/mainPage";
-@import "components/profileHeader";
-@import "components/addBio";
+@import "components/notificationPopup";
 
 
 @import "components/person";
+@import "components/postComment";
+@import "components/profileHeader";
+
+
+@import "components/sidebar";
 @import "components/sidebarInfo";
 
-@import "components/imageUploader";
 
 
-@import "components/modal";
+@import "components/textEditor";
 
-@import "components/loading";
 
-@import "components/message";
 @import "components/showResponse";
 
 @import "pages/home";
 @import "pages/messanger";
+@import "components/mainPage";
+

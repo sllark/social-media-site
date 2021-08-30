@@ -113,7 +113,6 @@ class Search extends React.Component {
                 <div className="home__container d-flex flex-row justify-end">
 
 
-                    <Sidebar/>
 
 
                     <div className="mainPage">
@@ -124,7 +123,7 @@ class Search extends React.Component {
                             <div className="mainPage__body flex-column">
 
 
-                                <h2 className="h-2 mt-1">People</h2>
+                                <h2 className="h-2 mt-1 w-100">People</h2>
 
 
                                 <div className="personList">

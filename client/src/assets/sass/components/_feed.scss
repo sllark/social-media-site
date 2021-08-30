@@ -2,4 +2,37 @@
   width: 45%;
   height: 100%;
   margin-top: $header-height;
+  justify-self: center;
+
+  @media (max-width: 760px) {
+    width: 67%;
+    margin-left: 6%;
+  }
+
+
+  @media (max-width: 760px) {
+    width: 90%;
+    margin-left: unset;
+  }
+
+
+
+}
+
+
+.feedCont{
+
+  justify-content: center;
+
+  @media (max-width: 760px) {
+    justify-content: flex-start;
+  }
+
+
+  @media (max-width: 760px) {
+    justify-content: center;
+  }
+
+
+
 }

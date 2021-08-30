@@ -1,13 +1,24 @@
 import {useEffect} from "react";
 
-function useOutsideAlerter(ref, action) {
+function useOutsideAlerter(ref, action, exclude, from) {
 
     useEffect(() => {
         /**
          * Alert if clicked on outside of element
          */
+
+
         function handleClickOutside(event) {
-            if (ref.current && !ref.current.contains(event.target)) {
+
+            let element;
+            if (exclude)
+                element = document.querySelector(exclude);
+
+            let clickOnExclude = element && element.contains(event.target);
+
+            if (ref.current
+                && !ref.current.contains(event.target)
+                && !clickOnExclude) {
                 action();
             }
         }

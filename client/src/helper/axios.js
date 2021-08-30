@@ -5,8 +5,14 @@ const instance = axios.create({
     baseURL: configs.api_url,
     headers: {
         "content-type": "application/json",
-        "Authorization": localStorage.getItem("token")
     }
 });
 
+instance.interceptors.request.use((config) => {
+    config.headers.Authorization = localStorage.getItem("token")
+    return config
+}, (err) => {
+    console.log(err)
+    return Promise.reject(err)
+})
 export default instance;

@@ -16,6 +16,13 @@
   flex-flow: column;
   justify-content: space-between;
 
+
+
+  @media (max-width: 760px) {
+    width: 100%;
+  }
+
+
   &__messagesCont{
 
 

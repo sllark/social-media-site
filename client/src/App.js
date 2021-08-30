@@ -2,6 +2,7 @@ import React from "react"
 import {BrowserRouter as Router, Route, Switch} from "react-router-dom"
 import io from "socket.io-client";
 
+import PrivateRoute from './helper/PrivateRoute'
 import configs from "./assets/config/configs";
 
 import './assets/sass/main.scss'
@@ -90,33 +91,33 @@ class App extends React.Component {
                     <Route path="/signup">
                         <Signup updateToken={this.updateToken}/>
                     </Route>
-                    <Route path="/feed"
+                    <PrivateRoute path="/feed"
                            render={props =>
                                <Layout {...props}>
                                    <Feed token={this.state.token} userID={this.state.userID}/>
                                </Layout>
                            }/>
 
-                    <Route path="/profile/:id"
+                    <PrivateRoute path="/profile/:id"
                            render={(props) =>
-                               <Layout {...props}>
+                               <Layout {...props} hideOnlineSidebar={true}>
                                    <Profile key={props.match.params.id}  {...props}/>
                                </Layout>}
                     />
 
-                    <Route path="/friends" render={
+                    <PrivateRoute path="/friends" render={
                         props =>
-                            <Layout {...props}>
+                            <Layout {...props} hideOnlineSidebar={true}>
                                 <Friends/>
                             </Layout>
                     }
                     />
-                    <Route path="/search" render={
+                    <PrivateRoute path="/search" render={
                         props =>
-                            <Layout {...props}>
+                            <Layout {...props} >
                                 <Search {...props}/>
                             </Layout>}/>
-                    <Route path="/messanger/:id"
+                    <PrivateRoute path="/messanger/:id"
                            render={(props) =>
                                <Layout {...props} >
                                    <Messanger  key={props.match.params.id}  {...props} socket={this.socket}/>

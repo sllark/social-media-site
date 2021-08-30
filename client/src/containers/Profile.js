@@ -278,8 +278,6 @@ class Profile extends React.Component {
                 <div className="home__container d-flex flex-row justify-end">
 
 
-                    <Sidebar/>
-
 
                     <div className="mainPage">
 

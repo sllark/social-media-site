@@ -183,13 +183,8 @@ class Feed extends React.Component {
                     : null
                 }
 
-                {/*<Header setResponsePreview={this.setResponsePreview}/>*/}
 
-                <div className="home__container d-flex flex-row justify-center">
-
-
-                    <Sidebar/>
-
+                <div className="home__container d-flex flex-row feedCont">
 
                     <div className="feed">
                         <CreateNewPost
@@ -219,8 +214,6 @@ class Feed extends React.Component {
                         }
 
                     </div>
-
-                    <SidebarOnline setResponsePreview={this.setResponsePreview}/>
 
                 </div>
 

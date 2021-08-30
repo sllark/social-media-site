@@ -71,6 +71,8 @@ class Messanger extends React.Component {
     }
 
     async componentDidMount() {
+        document.documentElement.style.overflowY = "unset";
+
         this._isMounted = true
         this.scrollEvent = this.messangerBodyRef.current.querySelector('.messanger__messagesCont').addEventListener('scroll', this.msgContScroll);
 
@@ -88,6 +90,8 @@ class Messanger extends React.Component {
     }
 
     componentWillUnmount() {
+        document.documentElement.style.overflowY = "scroll";
+
         this.messangerBodyRef.current.querySelector('.messanger__messagesCont').removeEventListener('scroll', this.msgContScroll)
     }
 
@@ -344,9 +348,6 @@ class Messanger extends React.Component {
                 <div className="home__container d-flex flex-row justify-center">
 
 
-                    <Sidebar/>
-
-
                     <div className="messanger" ref={this.messangerBodyRef}>
 
                         <div className="messanger__messagesCont">
@@ -389,8 +390,6 @@ class Messanger extends React.Component {
 
                     </div>
 
-
-                    <SidebarOnline setResponsePreview={this.setResponsePreview}/>
 
                 </div>
 

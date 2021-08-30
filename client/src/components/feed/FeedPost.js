@@ -32,11 +32,13 @@ class FeedPost extends React.Component {
             commentDisplayNum: 2,
             showLikesModal: false,
             showImageModal: false,
-            loadingLikes: false
+            loadingLikes: false,
+            hideOptions: true
         }
 
         this.modalRef = createRef();
     }
+
 
     componentDidMount() {
         this.loadLikes()
@@ -72,7 +74,7 @@ class FeedPost extends React.Component {
 
 
     loadLikes = () => {
-        this.setState({loadingLikes:true})
+        this.setState({loadingLikes: true})
 
         axios.get(
             "/getPostLikes",
@@ -85,7 +87,6 @@ class FeedPost extends React.Component {
         )
             .then(result => {
 
-
                 this.setState(
                     (prevState) => {
                         return {
@@ -93,14 +94,13 @@ class FeedPost extends React.Component {
                         }
                     }
                 )
-                console.log(result.data.likes)
 
             })
             .catch(error => {
                 handleAxiosError(error, this.props.setResponsePreview, "Internal Server Error.")
             })
-            .then(()=>{
-                this.setState({loadingLikes:false})
+            .then(() => {
+                this.setState({loadingLikes: false})
             })
 
 
@@ -265,7 +265,7 @@ class FeedPost extends React.Component {
 
         return (
             <>
-                <div className="feedPost">
+                <div className="feedPost" id={post._id}>
 
                     <div className="feedPost__header">
 
@@ -288,7 +288,29 @@ class FeedPost extends React.Component {
 
 
                         <div className="feedPost__header__options">
-                            <Option postUserId={post.user._id} posId={post._id} delete={this.deletePost}/>
+                            <div className="feedPostOption">
+
+                                <div
+                                    className="feedPostOption__iconContainer"
+                                    onClick={
+                                        (e) => this.setState(prevState => {
+                                            return {
+                                                hideOptions: !prevState.hideOptions
+                                            }
+                                        })
+                                    }
+                                >
+                                    {
+                                        !this.state.hideOptions &&
+                                        <Option postUserId={post.user._id} postId={post._id} delete={this.deletePost}
+                                                hideOptions={() => this.setState({hideOptions: true})}/>
+                                    }
+
+                                    <i className="feedPostOption__icon"/>
+                                </div>
+
+
+                            </div>
                         </div>
 
                     </div>
@@ -456,7 +478,7 @@ class FeedPost extends React.Component {
                             <div className="modalBody flex-start">
 
                                 {
-                                    this.state.likes.map(user=><NameDisplay key={user._id} user={user}/>)
+                                    this.state.likes.map(user => <NameDisplay key={user._id} user={user}/>)
                                 }
 
                             </div>

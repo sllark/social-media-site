@@ -8,8 +8,19 @@
   justify-content: center;
 
 
+  @media (max-width: 760px) {
+    width: 100%;
+  }
+
+
   &__container{
     width: 85%;
+
+
+    @media (max-width: 760px) {
+      width: 95%;
+    }
+
   }
 
 
@@ -23,6 +34,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    flex-flow: row wrap;
 
 
     &__posts{
@@ -32,6 +44,10 @@
         margin-top: 1rem!important;
       }
 
+
+      @media (max-width: 760px) {
+        width: 100%;
+      }
 
     }
 
@@ -43,6 +59,10 @@
       background-color: $color-container-bg;
       border-radius: $container-border-radius;
 
+
+      @media (max-width: 760px) {
+        width: 100%;
+      }
       h3{
         font-size: 2rem;
         font-weight: bold;
@@ -80,6 +100,11 @@
       margin-top: 1rem;
       border-radius: $container-border-radius;
       background-color: white;
+
+
+      @media (max-width: 760px) {
+        width: 100%;
+      }
 
     }
 

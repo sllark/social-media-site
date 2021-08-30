@@ -36,9 +36,11 @@
     position: relative;
     z-index: 1020;
     padding-bottom: 1rem;
-    width: 45%;
+
+    width: 90%;
     height: 80%;
-    min-width: 300px;
+    min-width: 35rem;
+    max-width: 68rem;
 
     overflow-y: auto;
     overflow-x: hidden;

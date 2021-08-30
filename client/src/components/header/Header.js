@@ -26,6 +26,7 @@ function Header(props) {
     const [responseStatus, setResponseStatus] = useState("");
     const [responseMsg, setResponseMsg] = useState("");
 
+
     const wrapperRef = useRef(null);
 
     useEffect(() => {
@@ -102,6 +103,14 @@ function Header(props) {
             <div className="header">
                 <div className="header__container">
 
+                    <div className={"hamburgerMenu hamburgerMenuLeft" + (props.menuLeftOpen ? " makeCross" : "")}
+                         onClick={() => props.setMenuLeftOpen(!props.menuLeftOpen)}>
+                        <div className="bar1"/>
+                        <div className="bar2"/>
+                        <div className="bar3"/>
+                    </div>
+
+
                     <Link to="/" className="header__logo">
                         <img src={logo} alt="logo"/>
                     </Link>
@@ -151,12 +160,21 @@ function Header(props) {
 
                         </div>
 
-                        <div className="header__controls__container">
+                        <div className="header__controls__container logoutCont">
                             <LogoutIcon onClick={logout}/>
                         </div>
 
 
                     </div>
+
+
+                    <div className={"hamburgerMenu hamburgerMenuRight" + (props.menuRightOpen ? " makeCross" : "")}
+                         onClick={() => props.setMenuRightOpen(!props.menuRightOpen)}>
+                        <div className="bar1"/>
+                        <div className="bar2"/>
+                        <div className="bar3"/>
+                    </div>
+
                 </div>
 
             </div>
