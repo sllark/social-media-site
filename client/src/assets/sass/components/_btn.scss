@@ -35,10 +35,10 @@
 
     &:hover,
     &:active,
-    &:focus{
+    &:focus,
+    &.active{
       background-color: $color-primary;
       color: white;
-
     }
 
   }

@@ -33,6 +33,9 @@ class Login extends React.Component {
         redirect:undefined
     }
 
+    componentDidMount() {
+        if (localStorage.getItem('token')) this.setState({redirect:"/feed"})
+    }
 
     changeHandler = (e) => {
         const target = e.target;

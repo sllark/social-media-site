@@ -10,15 +10,13 @@ import AddBio from "./AddBio";
 import dataURLtoFile from "../../helper/dataURLtoFile";
 import configs from "../../assets/config/configs";
 import axios from "axios";
+import axiosInstance from "../../helper/axios";
 import handleAxiosError from "../../helper/handleAxiosError";
 
 function ProfileHeader(props) {
 
     //props:
     // user
-    // updateBio
-    // sendReq
-    // cancelReq
     // addNewPost
     // setResponsePreview
 
@@ -121,7 +119,7 @@ function ProfileHeader(props) {
                 props.addNewPost(result.data.post)
             })
             .catch(error => {
-                handleAxiosError(error,props.setResponsePreview,"Failed to  update image.")
+                handleAxiosError(error, props.setResponsePreview, "Failed to  update image.")
             })
 
     }
@@ -144,6 +142,126 @@ function ProfileHeader(props) {
     }
 
 
+    const unfriendUser = () => {
+
+
+        axiosInstance.post(
+            "/unfriend",
+            JSON.stringify({
+                userID: props.user._id
+            }))
+            .then(result => {
+
+                if (result.data.message === "success") {
+                    props.updateUser("isMyFriend", false)
+                }
+
+            })
+            .catch(error => {
+
+                handleAxiosError(error, props.setResponsePreview, "Failed to unfriend.")
+
+            })
+
+    }
+
+
+    const sendFriendReq = () => {
+
+        if (props.user.reqSent) return;
+
+        let id = props.user._id;
+
+
+        axiosInstance.post(
+            "/sendFriendReq",
+            JSON.stringify({
+                userID: id
+            }))
+            .then(result => {
+
+                if (result.data.message === "success") {
+                    props.updateUser("reqSent", true)
+                }
+
+            })
+            .catch(error => {
+                handleAxiosError(error, props.setResponsePreview, "Failed to send request.")
+
+            })
+
+
+    }
+
+    const cancelReq = () => {
+
+        if (!props.user.reqSent) return;
+
+        let id = props.user._id;
+
+        axiosInstance.post(
+            "/cancelFriendReq",
+            JSON.stringify({
+                userID: id
+            }))
+            .then(result => {
+
+                if (result.data.message === "success" || result.data.errorMessage === "No Request to cancel") {
+                    props.updateUser("reqSent", false)
+                }
+
+            })
+            .catch(error => {
+
+                handleAxiosError(error, props.setResponsePreview, "Failed to cancel request.")
+
+            })
+
+
+    }
+
+
+    const acceptReq = () => {
+        let id = props.user._id;
+
+        axiosInstance.post(
+            "/acceptFriendReq",
+            JSON.stringify({
+                userID: id
+            }))
+            .then(result => {
+                if (result.data.message === "success")
+                    props.updateUser("reqRecieved", false)
+                    props.updateUser("isMyFriend", true)
+            })
+            .catch(error => {
+                handleAxiosError(error, props.setResponsePreview, "Could not accept request right now.")
+            })
+
+
+    }
+
+    const declineReq = () => {
+        let id = props.user._id;
+
+        axiosInstance.post(
+            "/declineFriendReq",
+            JSON.stringify({
+                userID: id
+            }))
+            .then(result => {
+                if (result.data.message === "success")
+                    props.updateUser("reqRecieved", false)
+            })
+            .catch(error => {
+                handleAxiosError(error, props.setResponsePreview, "Could not decline request right now.")
+
+            })
+
+
+    }
+
+
     let coverSrc = cropImageCover ? cropImageCover : props.user.coverPicture ?
         (configs.api_url + "/images/" + props.user.coverPicture) : "";
 
@@ -155,11 +273,20 @@ function ProfileHeader(props) {
 
 
     let reqBtn = null;
-    if (!props.user.isMyFriend && !props.user.reqSent)
-        reqBtn = <button className="btn btn--transparent mr-1" onClick={props.sendReq}>Send Friend Request</button>;
+    if (!props.user.isMyFriend && !props.user.reqSent && !props.user.reqRecieved)
+        reqBtn = <button className="btn btn--transparent mr-1" onClick={sendFriendReq}>Send Friend Request</button>;
     else if (!props.user.isMyFriend && props.user.reqSent)
-        reqBtn = <button className="btn btn--transparent mr-1" onClick={props.cancelReq}>Cancel Request</button>;
-    //
+        reqBtn = <button className="btn btn--transparent mr-1" onClick={cancelReq}>Cancel Request</button>;
+    else if (!props.user.isMyFriend && props.user.reqRecieved) {
+        reqBtn = (
+            <>
+                <button className="btn btn--transparent mr-1" onClick={acceptReq}>Accept Request</button>
+                <button className="btn btn--transparent mr-1" onClick={declineReq}>Decline Request</button>
+            </>)
+    } else if (props.user.isMyFriend)
+        reqBtn = <button className="btn btn--transparent mr-1"
+                         onClick={unfriendUser}>Unfriend</button>;
+
 
     return (
         <>
@@ -262,13 +389,16 @@ function ProfileHeader(props) {
                     isMyProfile ?
                         <AddBio
                             user={props.user}
-                            updateBio={props.updateBio}
+                            updateBio={(value) => props.updateUser('bio', value)}
                             haveBio={!!props.user.bio}
                             setResponsePreview={props.setResponsePreview}/> :
 
                         <div className="profileHeader__buttons">
+                            <Link className={"btn btn--transparent" + (props.friendsHeader ? " active" : "")}
+                                  to={"/friends/" + props.user._id}>Friends</Link>
                             {reqBtn}
                             <Link className="btn btn--transparent" to={"/messanger/" + props.user._id}>Message</Link>
+
                         </div>
                 }
 

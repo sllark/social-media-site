@@ -2,8 +2,6 @@ import React from "react";
 
 
 import FillScreen from "../components/FillScreen";
-import Header from "../components/header/Header";
-import Sidebar from "../components/general/Sidebar";
 import Person from "../components/profile/Person";
 import Loading from "../components/ui/Loading";
 import ProfileHeader from "../components/profile/ProfileHeader";
@@ -43,12 +41,14 @@ class Profile extends React.Component {
     }
 
     getUser = () => {
+        let id = this.props.match.params.id;
+
 
         axios.get(
             "/getUser",
             {
                 params: {
-                    profileID: localStorage.getItem("userID"),
+                    profileID: id || localStorage.getItem("userID"),
                 }
             })
             .then(result => {
@@ -59,7 +59,7 @@ class Profile extends React.Component {
 
             })
             .catch(error => {
-                handleAxiosError(error,this.setResponsePreview,"Loading Failed...")
+                handleAxiosError(error, this.setResponsePreview, "Loading Failed...")
             })
 
 
@@ -67,6 +67,8 @@ class Profile extends React.Component {
 
 
     loadFriends = () => {
+        let id = this.props.match.params.id;
+
 
         this.setState({
             isLoading: true
@@ -74,6 +76,7 @@ class Profile extends React.Component {
 
         axios.get("/getFriends", {
             params: {
+                profileID: id || localStorage.getItem("userID"),
                 loadedFriends: this.state.friends.length
             }
         })
@@ -89,7 +92,7 @@ class Profile extends React.Component {
 
             })
             .catch(error => {
-                handleAxiosError(error,this.setResponsePreview,"Failed to load friends...")
+                handleAxiosError(error, this.setResponsePreview, "Failed to load friends...")
 
             })
             .then(() => {
@@ -103,8 +106,13 @@ class Profile extends React.Component {
 
 
     getFriendsCount = () => {
+        let id = this.props.match.params.id;
 
-        axios.get("/getFriendsCount")
+        axios.get("/getFriendsCount", {
+            params: {
+                profileID: id || localStorage.getItem("userID"),
+            }
+        })
             .then(result => {
 
                 this.setState(prevState => {
@@ -115,7 +123,7 @@ class Profile extends React.Component {
 
             })
             .catch(error => {
-                handleAxiosError(error,this.setResponsePreview,"Failed to load friends...")
+                handleAxiosError(error, this.setResponsePreview, "Failed to load friends...")
 
             })
 
@@ -130,16 +138,15 @@ class Profile extends React.Component {
 
     }
 
-    updateBio = (bio) => {
-
+    updateUser = (property,value) => {
         let user = {...this.state.user};
-        user.bio = bio;
+        user[property] = value;
 
         this.setState({
             user
         })
-
     }
+
 
 
     setResponsePreview = (status, msg) => {
@@ -170,18 +177,16 @@ class Profile extends React.Component {
                 <div className="home__container d-flex flex-row justify-end">
 
 
-
                     <div className="mainPage">
 
                         <div className="mainPage__container">
 
                             <ProfileHeader
                                 user={this.state.user}
-                                updateBio={this.updateBio}
-                                sendReq={emptyFn}
-                                cancelReq={emptyFn}
+                                updateUser={this.updateUser}
                                 addNewPost={emptyFn}
                                 setResponsePreview={this.setResponsePreview}
+                                friendsHeader={true}
                             />
 
                             <div className="mainPage__body flex-column">

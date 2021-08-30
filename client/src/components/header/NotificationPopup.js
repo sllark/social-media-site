@@ -11,10 +11,10 @@ import handleAxiosError from "../../helper/handleAxiosError";
 function NotificationPopup(props) {
 
 
-    const [reqAccepted, setReqAccepted] = useState(false)
-    const [reqDeclined, setReqDeclined] = useState(false)
+    const [reqAccepted, setReqAccepted] = useState(undefined)
+    const [reqDeclined, setReqDeclined] = useState(undefined)
 
-    const acceptReq = (id) => {
+    const acceptReq = (id, notificatitionID) => {
 
         axios.post(
             "/acceptFriendReq",
@@ -22,8 +22,10 @@ function NotificationPopup(props) {
                 userID: id
             }))
             .then(result => {
-                if (result.data.message === "success")
-                    setReqAccepted(true)
+                if (result.data.message === "success") {
+                    setReqAccepted(notificatitionID)
+                    props.hideItem(notificatitionID)
+                }
             })
             .catch(error => {
                 handleAxiosError(error, props.setResponsePreview, "Could not accept request right now.")
@@ -31,7 +33,7 @@ function NotificationPopup(props) {
 
 
     }
-    const cancelReq = (id) => {
+    const cancelReq = (id, notificatitionID) => {
 
         axios.post(
             "/declineFriendReq",
@@ -39,8 +41,10 @@ function NotificationPopup(props) {
                 userID: id
             }))
             .then(result => {
-                if (result.data.message === "success")
-                    setReqDeclined(true)
+                if (result.data.message === "success") {
+                    setReqDeclined(notificatitionID)
+                    props.hideItem(notificatitionID)
+                }
             })
             .catch(error => {
                 handleAxiosError(error, props.setResponsePreview, "Could not decline request right now.")
@@ -58,10 +62,11 @@ function NotificationPopup(props) {
             {
                 props.notifications.map(item => {
 
+                    console.log(item)
                     return (
                         <div className="notificationPopup__item" key={item._id}>
 
-                            <Link to={"/profile/" + item.person._id}>
+                            <Link to={"/profile/" + item.person._id} onClick={() => props.showPopup(false)}>
                                 <Avatar
                                     url={
                                         item.person.profilePicture ?
@@ -77,10 +82,12 @@ function NotificationPopup(props) {
                                 </p>
 
                                 {
-                                    item.notificationType === "req" && !reqAccepted && !reqDeclined ?
+                                    item.notificationType === "req" && reqAccepted !== item._id && reqDeclined !== item._id ?
                                         <ReqBtns item={item} acceptReq={acceptReq} cancelReq={cancelReq}/>
-                                        : reqAccepted ? <p className="textSecondary">Request Accepted</p>
-                                        : reqDeclined ? <p className="textSecondary">Request Declined</p> : null
+                                        : item.notificationType === "req" && reqAccepted === item._id ?
+                                        <p className="textSecondary">Request Accepted</p>
+                                        : item.notificationType === "req" && reqDeclined === item._id ?
+                                            <p className="textSecondary">Request Declined</p> : null
                                 }
 
 
@@ -105,13 +112,13 @@ const ReqBtns = (props) => {
         <div className="notificationPopup__item__content__btns">
             <button
                 className="btn btn--secondary"
-                onClick={() => props.acceptReq(props.item.notificationPostID)}
+                onClick={() => props.acceptReq(props.item.notificationPostID, props.item._id)}
             >
                 Accept
             </button>
             <button
                 className="btn btn--primary"
-                onClick={() => props.cancelReq(props.item.notificationPostID)}
+                onClick={() => props.cancelReq(props.item.notificationPostID, props.item._id)}
             >
                 Decline
             </button>

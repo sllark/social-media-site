@@ -16,6 +16,7 @@ import Profile from './containers/Profile'
 import Friends from './containers/Friends'
 import Search from './containers/Search'
 import Messanger from './containers/Messanger'
+import Post from './containers/Post'
 import About from './containers/About'
 
 
@@ -92,37 +93,59 @@ class App extends React.Component {
                         <Signup updateToken={this.updateToken}/>
                     </Route>
                     <PrivateRoute path="/feed"
-                           render={props =>
-                               <Layout {...props}>
-                                   <Feed token={this.state.token} userID={this.state.userID}/>
-                               </Layout>
-                           }/>
+                                  render={props =>
+                                      <Layout {...props}>
+                                          <Feed token={this.state.token} userID={this.state.userID}/>
+                                      </Layout>
+                                  }/>
 
                     <PrivateRoute path="/profile/:id"
-                           render={(props) =>
-                               <Layout {...props} hideOnlineSidebar={true}>
-                                   <Profile key={props.match.params.id}  {...props}/>
-                               </Layout>}
+                                  render={(props) =>
+                                      <Layout {...props} hideOnlineSidebar={true}>
+                                          <Profile key={props.match.params.id}  {...props}/>
+                                      </Layout>}
                     />
 
-                    <PrivateRoute path="/friends" render={
-                        props =>
-                            <Layout {...props} hideOnlineSidebar={true}>
-                                <Friends/>
-                            </Layout>
-                    }
+                    <PrivateRoute path="/friends/:id"
+                                  render={
+                                      props =>
+                                          <Layout {...props} hideOnlineSidebar={true}>
+                                              <Friends  {...props} key={props.match.params.id}/>
+                                          </Layout>
+                                  }
                     />
+
+                    <PrivateRoute path="/friends"
+                                  render={
+                                      props =>
+                                          <Layout {...props} hideOnlineSidebar={true}>
+                                              <Friends  {...props}/>
+                                          </Layout>}
+                    />
+
+
+                    <PrivateRoute path="/post/:id"
+                                  render={
+                                      props =>
+                                          <Layout {...props}>
+                                              <Post  {...props} key={props.match.params.id}/>
+                                          </Layout>
+                                  }
+                    />
+
                     <PrivateRoute path="/search" render={
                         props =>
                             <Layout {...props} >
                                 <Search {...props}/>
-                            </Layout>}/>
+                            </Layout>}
+                    />
+
                     <PrivateRoute path="/messanger/:id"
-                           render={(props) =>
-                               <Layout {...props} >
-                                   <Messanger  key={props.match.params.id}  {...props} socket={this.socket}/>
-                               </Layout>
-                           }
+                                  render={(props) =>
+                                      <Layout {...props} >
+                                          <Messanger key={props.match.params.id}  {...props} socket={this.socket}/>
+                                      </Layout>
+                                  }
                     />
                     <Route path="/">
                         <Login updateToken={this.updateToken}/>

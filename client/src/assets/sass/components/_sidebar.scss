@@ -55,8 +55,11 @@
 
     }
 
-    &:focus {
-      text-decoration: underline;
+    a{
+
+      &:focus {
+        text-decoration: underline;
+      }
     }
 
 

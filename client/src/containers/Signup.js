@@ -60,6 +60,10 @@ class Signup extends React.Component {
     }
 
 
+    componentDidMount() {
+        if (localStorage.getItem('token')) this.setState({redirect:"/feed"})
+    }
+
     changeHandler = (e) => {
         const target = e.target;
         const name = target.name;

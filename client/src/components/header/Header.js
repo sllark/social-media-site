@@ -68,6 +68,12 @@ function Header(props) {
 
     }
 
+    const hideItem = (id) => {
+        //TODO: refresh page or update profile/friend page if it is opened
+        let notifi = notifications.filter(item => item._id !== id)
+        setNotifications(notifi)
+    }
+
     const logout = () => {
         localStorage.removeItem("userID");
         localStorage.removeItem("token");
@@ -153,7 +159,10 @@ function Header(props) {
                                 notifiPopup ?
                                     <NotificationPopup
                                         notifications={notifications}
-                                        setResponsePreview={setResponsePreview}/>
+                                        setResponsePreview={setResponsePreview}
+                                        showPopup={setNotifiPopup}
+                                        hideItem={hideItem}
+                                    />
                                     : null
 
                             }

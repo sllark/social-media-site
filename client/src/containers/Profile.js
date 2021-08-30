@@ -1,5 +1,5 @@
 import React from "react";
-import {Redirect} from "react-router-dom";
+import {Redirect,Link} from "react-router-dom";
 
 import axios from "../helper/axios";
 
@@ -164,84 +164,14 @@ class Profile extends React.Component {
 
     }
 
-    updateBio = (bio) => {
 
+    updateUser = (property,value) => {
         let user = {...this.state.user};
-        user.bio = bio;
+        user[property] = value;
 
         this.setState({
             user
         })
-
-    }
-
-    sendFriendReq = () => {
-
-        if (this.state.user.reqSent) return;
-
-        let id = this.props.match.params.id;
-
-
-        axios.post(
-            "/sendFriendReq",
-            JSON.stringify({
-                userID: id
-            }))
-            .then(result => {
-
-                if (result.data.message === "success") {
-                    let user = {...this.state.user};
-                    user.reqSent = true;
-                    this.setState({user})
-                }
-
-            })
-            .catch(error => {
-                handleAxiosError(error,this.setResponsePreview,"Failed to send request.")
-
-            })
-            .then(() => {
-                this.setState({
-                    isLoading: false
-                })
-            })
-
-
-    }
-
-    cancelReq = () => {
-
-        if (!this.state.user.reqSent) return;
-
-        let id = this.props.match.params.id;
-
-
-        axios.post(
-            "/cancelFriendReq",
-            JSON.stringify({
-                userID: id
-            }))
-            .then(result => {
-
-                if (result.data.message === "success" || result.data.errorMessage === "No Request to cancel") {
-                    let user = {...this.state.user};
-                    user.reqSent = false;
-                    this.setState({user})
-                }
-
-            })
-            .catch(error => {
-
-                handleAxiosError(error,this.setResponsePreview,"Failed to cancel request.")
-
-            })
-            .then(() => {
-                this.setState({
-                    isLoading: false
-                })
-            })
-
-
     }
 
 
@@ -286,9 +216,7 @@ class Profile extends React.Component {
 
                             <ProfileHeader
                                 user={this.state.user}
-                                updateBio={this.updateBio}
-                                sendReq={this.sendFriendReq}
-                                cancelReq={this.cancelReq}
+                                updateUser={this.updateUser}
                                 addNewPost={this.addNewPost}
                                 setResponsePreview={this.setResponsePreview}
                             />
@@ -356,6 +284,10 @@ class Profile extends React.Component {
                                             </p>
                                             : null
                                     }
+
+                                    <p className="mainPage__body__about__item bday">
+                                        <Link to={"/friends/"+this.state.user._id}>See Friends of {this.state.user.firstName}</Link>
+                                    </p>
 
 
                                     {/*<p className="mainPage__body__about__item liveIn">*/}
