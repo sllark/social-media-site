@@ -41,6 +41,32 @@ function Header(props) {
 
     }, [])
 
+
+    useEffect(() => {
+
+        if (props.notification) {
+
+            let prevNoti = [...notifications]
+
+            let filtered = prevNoti.filter(noti => noti._id !== props.notification._id)
+
+            if (filtered.length === prevNoti.length) {
+                setNotifications([props.notification, ...notifications])
+
+                let type = props.notification.notificationType;
+                if (type === "share" || type === "req") {
+                    setResponsePreview("message", props.notification.content)
+                }
+
+            } else if (filtered.length < prevNoti.length)
+                setNotifications(filtered)
+
+
+        }
+
+    }, [props.notification])
+
+
     useOutsideAlerter(wrapperRef, () => {
         setNotifiPopup(false)
     });
@@ -81,9 +107,6 @@ function Header(props) {
         changeRedirect('/')
     }
 
-    if (redirect) {
-        return <Redirect to={redirect}/>
-    }
 
     const getQuery = (locationQuery) => {
         let params = new URLSearchParams(locationQuery);
@@ -93,6 +116,11 @@ function Header(props) {
     const setResponsePreview = (status, msg) => {
         setResponseMsg(msg)
         setResponseStatus(status)
+    }
+
+
+    if (redirect) {
+        return <Redirect to={redirect}/>
     }
 
 

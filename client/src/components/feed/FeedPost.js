@@ -28,6 +28,8 @@ class FeedPost extends React.Component {
             hasLiked: this.props.post.likes.likedByMe || false,
             commentsNum: this.props.post.comments.count,
             comments: this.props.post.comments.by,
+            shares: this.props.post.shares?.by || [],
+            sharesNum: this.props.post.shares?.count || 0,
             showComments: true,
             commentDisplayNum: 2,
             showLikesModal: false,
@@ -50,12 +52,19 @@ class FeedPost extends React.Component {
 
             if (this.state.showLikesModal) {
                 this.modalRef.current.addEventListener('scroll', this.scrollModal)
+                //event removed automatically when element is removed
             } else {
                 this.setState({loadingLikes: false})
             }
 
-
         }
+
+        if (prevProps.post.likes?.count < this.props.post?.likes?.count)
+            this.realtimePostLike()
+        else if (prevProps.post.likes?.count > this.props.post?.likes?.count)
+            this.realtimePostUnlike()
+        else if (prevProps.post.shares?.count < this.props.post.shares?.count)
+            this.realtimePostShare()
 
 
     }
@@ -71,7 +80,6 @@ class FeedPost extends React.Component {
         }
 
     }
-
 
     loadLikes = () => {
         this.setState({loadingLikes: true})
@@ -145,7 +153,6 @@ class FeedPost extends React.Component {
 
     }
 
-
     sharePost = (e) => {
 
         axios.post(
@@ -165,7 +172,6 @@ class FeedPost extends React.Component {
 
     }
 
-
     loadComments = (e) => {
 
         this.setState(
@@ -177,7 +183,6 @@ class FeedPost extends React.Component {
         )
 
     }
-
 
     postComment = (value, clearValues) => {
 
@@ -211,7 +216,6 @@ class FeedPost extends React.Component {
             })
 
     }
-
 
     deletePost = () => {
 
@@ -254,10 +258,56 @@ class FeedPost extends React.Component {
 
     }
 
-
     showImage = () => {
         this.setState({showImageModal: true})
     }
+
+    realtimePostLike = () => {
+
+
+        this.setState(prevState => {
+
+            let likes = [...prevState.likes];
+
+            likes.splice(0, 0, this.props.post.realtimeLike)
+
+            return {
+                likes: likes,
+                likesNum: prevState.likesNum + 1
+            }
+        })
+
+
+    }
+
+    realtimePostUnlike = () => {
+        this.setState(prevState => {
+
+            let likes = [...prevState.likes]
+            likes = prevState.likes.filter(item => item._id !== this.props.post.realtimeUnlike);
+
+            return {
+                likes: likes,
+                likesNum: prevState.likesNum - 1
+            }
+        })
+    }
+
+
+    realtimePostShare = () => {
+
+        this.setState(prevState => {
+
+            let shares = [...prevState.shares]
+            shares = prevState.shares.filter(item => item._id !== this.props.post.realtimeShare._id);
+
+            return {
+                shares: shares,
+                shareNum: prevState.shareNum + 1
+            }
+        })
+    }
+
 
     render() {
 
@@ -276,6 +326,7 @@ class FeedPost extends React.Component {
                                         (configs.api_url + "/images/" + post.user.profilePicture) : null
                                 }
                                 roundAvatar={true}
+                                isActive={post.user.isOnline || post.user._id === localStorage.getItem("userID")}
                             />
 
                             <div className="feedPost__header__content__meta">

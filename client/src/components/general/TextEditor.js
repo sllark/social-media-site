@@ -12,7 +12,8 @@ function TextEditor(props) {
 
     const [commentValue, changeCommentValue] = useState("");
 
-    let onKeyPress = () => {};
+    let onKeyPress = () => {
+    };
     if (props.onKeyPress) onKeyPress = props.onKeyPress;
 
 
@@ -25,7 +26,8 @@ function TextEditor(props) {
 
 
             <Link to={"/profile/" + props.profile?._id || ""}>
-                <Avatar isActive={true} url={profilePic}/>
+                <Avatar isActive={props.profile.isOnline || props.profile._id === localStorage.getItem("userID")}
+                        url={profilePic}/>
             </Link>
             <div className="textEditor__input d-flex">
 

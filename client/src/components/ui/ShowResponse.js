@@ -45,23 +45,21 @@ export default function ShowResponse(props) {
     }
 
 
+    if (props.status==='message'){
+        return (
+            <div className="showResponse">
+                <p>
+                    <strong>{props.message}</strong>
+                </p>
+            </div>
+
+        );
+    }
+
+
 
     return (
         <div className="showResponse">
-            <div className="showResponse-spinner">
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-            </div>
             <p>
                 Saving...
             </p>

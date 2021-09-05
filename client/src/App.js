@@ -27,6 +27,8 @@ class App extends React.Component {
         this.state = {
             token: "",
             userID: "",
+            usersOnline: [],
+            usersOffline: []
         }
 
         this.socket = undefined
@@ -38,12 +40,39 @@ class App extends React.Component {
         this.joinSocket(this.socket)
 
         this.socket.on('disconnect', (msg) => {
+            //TODO: show some response
             console.log('disconnected');
         })
 
         this.socket.on('wrongToken', (msg) => {
+            //TODO: show some response
             console.log('wrong token detected');
-            // alert("Authentication Failed!!! Please login first");
+        })
+
+        this.socket.on('userOnline', (user) => {
+            this.setState(prevState => {
+                let users = [...prevState.usersOnline]
+                const findIndex = users.findIndex(item => item._id === user._id);
+                if (findIndex < 0) {
+                    users.push(user);
+                    return {usersOnline: users}
+                }
+
+                return {}
+            })
+        })
+
+        this.socket.on('userOffline', (user) => {
+
+            this.setState(prevState => {
+                let users = [...prevState.usersOffline]
+                const findIndex = users.findIndex(item => item._id === user._id);
+                if (findIndex < 0) {
+                    users.push(user);
+                    return {usersOffline: users}
+                }
+                return {}
+            })
         })
 
 
@@ -74,6 +103,25 @@ class App extends React.Component {
         this.setState({token: data.token, userID: data.userID})
     }
 
+    removeUser = (userID,userType) => {
+
+        this.setState(prevState => {
+
+            let users = [...prevState[userType]]
+            users = users.filter(item=>item._id!==userID);
+            // users.splice(0,1);
+
+            return {
+                [userType]: users
+            }
+        })
+    }
+
+
+    updateUserDetails = () => {
+
+    }
+
 
     render() {
 
@@ -94,14 +142,27 @@ class App extends React.Component {
                     </Route>
                     <PrivateRoute path="/feed"
                                   render={props =>
-                                      <Layout {...props}>
-                                          <Feed token={this.state.token} userID={this.state.userID}/>
+                                      <Layout
+                                          {...props}
+                                          socket={this.socket}
+                                          usersOnline={this.state.usersOnline}
+                                          usersOffline={this.state.usersOffline}
+                                          removeUser={this.removeUser}
+                                      >
+                                          <Feed />
                                       </Layout>
                                   }/>
 
                     <PrivateRoute path="/profile/:id"
                                   render={(props) =>
-                                      <Layout {...props} hideOnlineSidebar={true}>
+                                      <Layout
+                                          {...props}
+                                          socket={this.socket}
+                                          usersOnline={this.state.usersOnline}
+                                          usersOffline={this.state.usersOffline}
+                                          removeUser={this.removeUser}
+                                          hideOnlineSidebar={true}
+                                      >
                                           <Profile key={props.match.params.id}  {...props}/>
                                       </Layout>}
                     />
@@ -109,7 +170,14 @@ class App extends React.Component {
                     <PrivateRoute path="/friends/:id"
                                   render={
                                       props =>
-                                          <Layout {...props} hideOnlineSidebar={true}>
+                                          <Layout
+                                              {...props}
+                                              socket={this.socket}
+                                              usersOnline={this.state.usersOnline}
+                                              usersOffline={this.state.usersOffline}
+                                              removeUser={this.removeUser}
+                                              hideOnlineSidebar={true}
+                                          >
                                               <Friends  {...props} key={props.match.params.id}/>
                                           </Layout>
                                   }
@@ -118,7 +186,14 @@ class App extends React.Component {
                     <PrivateRoute path="/friends"
                                   render={
                                       props =>
-                                          <Layout {...props} hideOnlineSidebar={true}>
+                                          <Layout
+                                              {...props}
+                                              socket={this.socket}
+                                              usersOnline={this.state.usersOnline}
+                                              usersOffline={this.state.usersOffline}
+                                              removeUser={this.removeUser}
+                                              hideOnlineSidebar={true}
+                                          >
                                               <Friends  {...props}/>
                                           </Layout>}
                     />
@@ -127,7 +202,13 @@ class App extends React.Component {
                     <PrivateRoute path="/post/:id"
                                   render={
                                       props =>
-                                          <Layout {...props}>
+                                          <Layout
+                                              {...props}
+                                              socket={this.socket}
+                                              usersOnline={this.state.usersOnline}
+                                              usersOffline={this.state.usersOffline}
+                                              removeUser={this.removeUser}
+                                          >
                                               <Post  {...props} key={props.match.params.id}/>
                                           </Layout>
                                   }
@@ -135,14 +216,26 @@ class App extends React.Component {
 
                     <PrivateRoute path="/search" render={
                         props =>
-                            <Layout {...props} >
+                            <Layout
+                                {...props}
+                                socket={this.socket}
+                                usersOnline={this.state.usersOnline}
+                                usersOffline={this.state.usersOffline}
+                                removeUser={this.removeUser}
+                            >
                                 <Search {...props}/>
                             </Layout>}
                     />
 
                     <PrivateRoute path="/messanger/:id"
                                   render={(props) =>
-                                      <Layout {...props} >
+                                      <Layout
+                                          {...props}
+                                          socket={this.socket}
+                                          usersOnline={this.state.usersOnline}
+                                          usersOffline={this.state.usersOffline}
+                                          removeUser={this.removeUser}
+                                      >
                                           <Messanger key={props.match.params.id}  {...props} socket={this.socket}/>
                                       </Layout>
                                   }

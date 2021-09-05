@@ -31,6 +31,38 @@ function SidebarOnline(props) {
 
     }, [])
 
+    useEffect(() => {
+
+        if (!props.onlineUser) return;
+
+        const findIndex = sidebarItems.findIndex(item => item._id === props.onlineUser._id);
+
+        if (findIndex < 0) {
+            setSidebarItems([...sidebarItems, props.onlineUser]);
+            // setResponseStatus('message')
+            // setResponseMsg(`${props.onlineUser.firstName} is Online.`)
+            props.removeUser(props.onlineUser._id,"usersOnline");
+        }
+    }, [props.onlineUser])
+
+    useEffect(() => {
+
+        if (!props.offlineUser) return;
+
+        const findIndex = sidebarItems.findIndex(item => item._id === props.offlineUser._id);
+
+        if (findIndex >= 0) {
+            let items = [...sidebarItems];
+
+            items.splice(findIndex,1);
+            setSidebarItems(items);
+
+            // setResponseStatus('message')
+            // setResponseMsg(`${props.offlineUser.firstName} is Ofline.`)
+            props.removeUser(props.offlineUser._id,"usersOffline");
+        }
+    }, [props.offlineUser])
+
 
     useOutsideAlerter(wrapperRef, () => {
         props.showMenu(false)
@@ -40,6 +72,8 @@ function SidebarOnline(props) {
         setResponseMsg(msg)
         setResponseStatus(status)
     }
+
+
     return (
 
         <>
@@ -57,7 +91,7 @@ function SidebarOnline(props) {
                 className={
                     "sidebar sidebarOnline" +
                     (sidebar ? " scrollbarVisible" : "") +
-                    (props.isVisible ? " showSidebar" : "")+
+                    (props.isVisible ? " showSidebar" : "") +
                     (props.hideSidebarLG ? " hideSidebarLG" : "")
                 }
                 onMouseEnter={event => setSidebar(true)}

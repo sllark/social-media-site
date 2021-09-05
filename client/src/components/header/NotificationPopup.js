@@ -54,7 +54,6 @@ function NotificationPopup(props) {
 
     }
 
-
     //TODO: make notification text a link so it take user to respective post or profile
     return (
         <div className="notificationPopup">
@@ -62,7 +61,12 @@ function NotificationPopup(props) {
             {
                 props.notifications.map(item => {
 
-                    console.log(item)
+                    let notiUrl="/post/"+item.notificationPostID;
+
+                    if(item.notificationType==="req")
+                        notiUrl="/profile/"+item.notificationPostID;
+
+
                     return (
                         <div className="notificationPopup__item" key={item._id}>
 
@@ -77,9 +81,12 @@ function NotificationPopup(props) {
                             </Link>
 
                             <div className="notificationPopup__item__content">
-                                <p>
-                                    {item.content}
-                                </p>
+                                <Link to={notiUrl}>
+                                    <p>
+                                        {item.content}
+                                    </p>
+                                </Link>
+
 
                                 {
                                     item.notificationType === "req" && reqAccepted !== item._id && reqDeclined !== item._id ?

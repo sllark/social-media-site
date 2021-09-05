@@ -6,8 +6,6 @@ import handleAxiosError from "../helper/handleAxiosError";
 import FillScreen from "../components/FillScreen";
 import CreateNewPost from "../components/feed/CreateNewPost";
 import FeedPost from "../components/feed/FeedPost";
-import Sidebar from "../components/general/Sidebar";
-import SidebarOnline from "../components/general/SidebarOnline";
 import Loading from "../components/ui/Loading";
 import ShowResponse from "../components/ui/ShowResponse";
 
@@ -24,13 +22,69 @@ class Feed extends React.Component {
             isLoading: false,
             responseMsg: "",
             responseStatus: "",
-            user:{
+            user: {
                 firstName: ".",
                 lastName: "."
             }
         }
 
         this.scrollEvent = null;
+
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+
+        if (this.props.onlineUser && prevProps.onlineUser !== this.props.onlineUser) {
+
+            let posts = [...this.state.posts]
+            posts = posts.map(item => {
+
+                if (item.user._id === this.props.onlineUser._id) {
+                    item.user.isOnline = true
+                }
+
+
+                item.comments.by.forEach((comment, index) => {
+                    if (comment.person._id === this.props.onlineUser._id)
+                        comment.person.isOnline = true
+                })
+
+                return item;
+
+            })
+            this.setState({posts: posts})
+
+        }
+
+
+        if (this.props.offlineUser && prevProps.offlineUser !== this.props.offlineUser) {
+
+
+            let posts = [...this.state.posts]
+            posts = posts.map(item => {
+
+                if (item.user._id === this.props.offlineUser._id) {
+                    item.user.isOnline = false
+                }
+
+
+                item.comments.by.forEach(comment => {
+                    if (comment.person._id === this.props.offlineUser._id)
+                        comment.person.isOnline = false
+                })
+
+                return item;
+
+            })
+            this.setState({posts: posts})
+
+        }
+
+
+        if (this.props.notification && prevProps.notification !== this.props.notification) {
+            this.updatePostRealtime(this.props.notification);
+        }
+
 
     }
 
@@ -44,6 +98,56 @@ class Feed extends React.Component {
     componentWillUnmount() {
         window.removeEventListener('scroll', this.loadMore);
     }
+
+    updatePostRealtime = (notification) => {
+
+
+        if (notification.notificationType === "like") {
+            this.postLikeEvent(notification);
+        }
+
+
+        // notificationType
+        // notificationPostID
+
+
+    }
+
+    postLikeEvent = (data) => {
+
+        let posts = [...this.state.posts];
+        let postIndex = posts.findIndex(item => item._id === data.notificationPostID);
+
+        if (postIndex < 0) return;
+
+        let postToUpdate = {...posts[postIndex]}
+        let likes = {...postToUpdate.likes}
+        let likesBy = [...likes.by]
+
+        if (data.person._id) { // post liked
+
+            postToUpdate.realtimeLike = data.person
+            likes.count += 1
+            likesBy.splice(0,0,data.person._id);
+
+            this.setResponsePreview("message",data.content);
+
+        }
+        else { //like removed
+            postToUpdate.realtimeUnlike = data.person
+            likes.count -= 1
+            likesBy = likesBy.filter(item => item !== data.person);
+        }
+
+
+        postToUpdate.likes = {...likes, by: [...likesBy]};
+        posts[postIndex] = postToUpdate;
+
+        this.setState({posts})
+    }
+
+
+
 
     getMyUser = () => {
         let id = localStorage.getItem('userID');
@@ -63,12 +167,11 @@ class Feed extends React.Component {
 
             })
             .catch(error => {
-                handleAxiosError(error,this.setResponsePreview,"Loading Failed...")
+                handleAxiosError(error, this.setResponsePreview, "Loading Failed...")
             })
 
 
     }
-
 
     loadMore = (e) => {
 
@@ -107,7 +210,7 @@ class Feed extends React.Component {
 
             })
             .catch(error => {
-                handleAxiosError(error,this.setResponsePreview,"Loading Failed...")
+                handleAxiosError(error, this.setResponsePreview, "Loading Failed...")
             })
             .then(() => {
                 this.setState({
@@ -117,7 +220,6 @@ class Feed extends React.Component {
 
     }
 
-
     getFeedPostsCount = () => {
 
         axios.get("/getFeedPostsCount")
@@ -126,7 +228,7 @@ class Feed extends React.Component {
 
             })
             .catch(error => {
-                handleAxiosError(error,this.setResponsePreview,"Loading Failed...")
+                handleAxiosError(error, this.setResponsePreview, "Loading Failed...")
             })
     }
 

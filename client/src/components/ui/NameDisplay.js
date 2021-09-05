@@ -13,7 +13,7 @@ function NameDisplay(props) {
 
     return (
         <Link to={props.user._id ? ("/profile/"+props.user._id) :""} className="nameDisplay">
-            <Avatar isActive={props.user.isOnline} url={avatarSrc || ""}/>
+            <Avatar isActive={props.user.isOnline || props.user._id ===localStorage.getItem("userID")} url={avatarSrc || ""}/>
             <p>
                 {props.user.firstName + " " + props.user.lastName}
             </p>

@@ -45,7 +45,8 @@ class Messanger extends React.Component {
 
     componentDidUpdate(prevProps, prevState, snapshot) {
 
-        if (prevProps.socket === null) {
+
+        if (!prevProps.socket) {
             this.addSocketEvents();
         }
 
@@ -80,6 +81,8 @@ class Messanger extends React.Component {
         this.getOldMessages();
 
         if (this.props.socket) this.addSocketEvents();
+
+        console.log(this.props.socket);
 
         let myID = await this.getProfileDetails(localStorage.getItem("userID"))
         this.setState({myProfile: myID})

@@ -37,7 +37,7 @@ function Comment(props) {
 
 
                 <Link to={"/profile/" + props.ele.person._id || ""}>
-                    <Avatar url={profilePic}/>
+                    <Avatar url={profilePic} isActive={props.ele.person.isOnline || props.ele.person._id ===localStorage.getItem("userID")}/>
                 </Link>
 
                 {/*<div className="line"></div>*/}

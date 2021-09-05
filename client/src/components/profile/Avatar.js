@@ -16,6 +16,9 @@ function Avatar(props) {
     // if (props.roundAvatar)
     //     classes+=" b-radius-100"
 
+    let isActive = props.isActive
+
+    // if ()
 
     return (
         <div className={classes}>
