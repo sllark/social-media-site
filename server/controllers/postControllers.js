@@ -11,6 +11,7 @@ const Message = require('../model/Message');
 
 const {llenAsync} = require('../helper/redis')
 const getChatID = require('../helper/getChatID');
+const {getIO} = require('../helper/socket')
 
 
 exports.createPost = async (req, res, next) => {
@@ -70,6 +71,7 @@ exports.createPost = async (req, res, next) => {
 exports.deletePost = async (req, res, next) => {
 
     //TODO: delete image of the related post (make updated for shared posts images)
+    //TODO: delete notifications if related post is deleted
 
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
@@ -149,13 +151,13 @@ exports.getProfilePosts = async (req, res, next) => {
         populate: {
             path: 'person',
             model: 'User',
-            select: 'firstName lastName profilePicture'
+            select: 'firstName lastName profilePicture isOnline'
         }
     })
         .populate({
             path: 'posts.sharedFrom',
             model: 'User',
-            select: 'firstName lastName profilePicture'
+            select: 'firstName lastName profilePicture isOnline'
         })
         .execPopulate()
 
@@ -197,6 +199,7 @@ exports.likePost = async (req, res, next) => {
         myUser = null,
         originalPost = null;
 
+    let io = getIO();
 
     originalPost = await Post.findById(postID)
 
@@ -219,8 +222,9 @@ exports.likePost = async (req, res, next) => {
                 notificationPostID: originalPost._id
             })
 
-            let notificationIndex = postAuthor.notifications.findIndex(id => id.toString() === notifi._id.toString())
+            io.in(postAuthor._id.toString()).emit('postUnliked', notifi);
 
+            let notificationIndex = postAuthor.notifications.findIndex(id => id.toString() === notifi._id.toString())
             postAuthor.notifications.splice(notificationIndex, 1);
             await postAuthor.save();
 
@@ -266,6 +270,16 @@ exports.likePost = async (req, res, next) => {
     postAuthor.notifications.splice(0, 0, notification._id);
     await postAuthor.save();
 
+
+    await notification.populate({
+        path: 'person',
+        model: 'User',
+        select: "firstName lastName profilePicture isOnline"
+    }).execPopulate();
+
+
+    io.in(postAuthor._id.toString()).emit('postLiked', notification)
+
     res.status(200).json({
         "message": "success"
     });
@@ -294,6 +308,13 @@ exports.sharePost = async (req, res, next) => {
     }
 
 
+    originalPost.shares.count += 1;
+    originalPost.shares.by.splice(0, 0, userID)
+
+    originalPost.markModified('shares');
+    await originalPost.save();
+
+
     let user = await User.findById(userID)
     let postAuthor = await User.findById(originalPost.user);
 
@@ -318,8 +339,10 @@ exports.sharePost = async (req, res, next) => {
         }
     })
     await newPost.save()
+
     user.posts.push(newPost._id);
     await user.save();
+
 
     let notification = new Notification({
         person: userID,
@@ -339,6 +362,19 @@ exports.sharePost = async (req, res, next) => {
         model: 'User',
         select: "firstName lastName profilePicture"
     }).execPopulate();
+
+
+
+
+    // populate for alert
+    await notification.populate({
+        path: 'person',
+        model: 'User',
+        select: "firstName lastName profilePicture isOnline"
+    }).execPopulate();
+
+    let io = getIO();
+    io.in(postAuthor._id.toString()).emit('postShared', notification)
 
 
     res.status(200).json({
@@ -539,6 +575,46 @@ exports.likeComment = async (req, res, next) => {
 }
 
 
+exports.getSinglePosts = async (req, res, next) => {
+
+    const validation = validationResult(req)
+    if (!validation.isEmpty()) {
+        let errors = validation.array()
+        const error = new Error(errors[0].msg);
+        error.statusCode = 422;
+        error.errors = errors;
+        return next(error);
+    }
+
+    let post = await Post.findById(req.query.postID)
+        .populate('user', 'firstName lastName profilePicture isOnline')
+        .populate({
+            path: 'comments.by',
+            model: 'CommentBy',
+            populate: {
+                path: 'person',
+                select: 'firstName lastName profilePicture isOnline',
+                model: 'User'
+            }
+        })
+        .populate({
+            path: 'sharedFrom',
+            model: 'User',
+            select: 'firstName lastName profilePicture'
+        })
+
+    let likeIndex = -1;
+    likeIndex = post.likes.by.findIndex(id => id.toString() === req.user.userID.toString())
+    post.likes.likedByMe = likeIndex >= 0
+
+    res.status(200).json({
+        "message": "success",
+        post: post
+    });
+
+}
+
+
 exports.getFeedPosts = async (req, res, next) => {
 
     const validation = validationResult(req)
@@ -562,13 +638,13 @@ exports.getFeedPosts = async (req, res, next) => {
         .sort({_id: -1})
         .limit(max)
         .skip(skip)
-        .populate('user', 'firstName lastName profilePicture')
+        .populate('user', 'firstName lastName profilePicture isOnline')
         .populate({
             path: 'comments.by',
             model: 'CommentBy',
             populate: {
                 path: 'person',
-                select: 'firstName lastName profilePicture',
+                select: 'firstName lastName profilePicture isOnline',
                 model: 'User'
             }
         })

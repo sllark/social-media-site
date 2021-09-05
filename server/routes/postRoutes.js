@@ -20,12 +20,13 @@ router.get('/getProfilePosts', isAuth, validateObjectID("profileID"), asyncHandl
 
 router.post('/likePost', isAuth, validateObjectID("postID"), asyncHandler(postControllers.likePost))
 
-
 router.post('/sharePost', isAuth, validateObjectID("postID"), asyncHandler(postControllers.sharePost))
 
 router.post('/commentPost', isAuth, validateObjectID("postID"), [body('value').notEmpty()], asyncHandler(postControllers.commentPost))
 
 router.post('/likeComment', isAuth, validateObjectID("commentID"), asyncHandler(postControllers.likeComment))
+
+router.get('/getSinglePosts', isAuth,validateObjectID("postID"), asyncHandler(postControllers.getSinglePosts))
 
 router.get('/getFeedPosts', isAuth, asyncHandler(postControllers.getFeedPosts))
 

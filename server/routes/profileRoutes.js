@@ -1,5 +1,5 @@
 const express = require('express');
-const {body,check} = require('express-validator')
+const {body, check} = require('express-validator')
 const asyncHandler = require('express-async-handler')
 
 
@@ -37,12 +37,15 @@ router.post('/acceptFriendReq', isAuth, validateObjectID("userID"), asyncHandler
 
 router.post('/declineFriendReq', isAuth, validateObjectID("userID"), asyncHandler(profileControllers.declineFriendReq))
 
+router.post('/unfriend', isAuth, validateObjectID("userID"), asyncHandler(profileControllers.unfriend))
+
 router.get('/getNotifications', isAuth, asyncHandler(profileControllers.getNotifications))
 
 router.get('/getOnlineFriends', isAuth, asyncHandler(profileControllers.getOnlineFriends))
 
-router.get('/getFriends', isAuth, asyncHandler(profileControllers.getFriends))
+router.get('/getFriends', isAuth, validateObjectID("profileID"), asyncHandler(profileControllers.getFriends))
 
-router.get('/getFriendsCount', isAuth, asyncHandler(profileControllers.getFriendsCount))
+router.get('/getFriendsCount', isAuth, validateObjectID("profileID"), asyncHandler(profileControllers.getFriendsCount))
+
 
 module.exports = router;

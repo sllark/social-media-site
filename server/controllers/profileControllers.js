@@ -5,6 +5,7 @@ const User = require('../model/User');
 const Post = require('../model/Post');
 const Notification = require('../model/Notification');
 
+const {getIO} = require('../helper/socket')
 
 
 exports.getUser = async (req, res, next) => {
@@ -22,7 +23,7 @@ exports.getUser = async (req, res, next) => {
     let userID = req.user.userID
 
     let user = await User.findById(req.query.profileID)
-        .select("firstName lastName profilePicture coverPicture bio dob gender friends friendRequests isOnline")
+        .select("firstName lastName profilePicture coverPicture bio dob gender friends friendRequests friendRequestsSent isOnline")
 
 
     user = await user.populate({
@@ -34,14 +35,16 @@ exports.getUser = async (req, res, next) => {
     let updatedUser = {...user._doc};
 
     let myFriendIndex = updatedUser.friends.findIndex(id => id.toString() === userID.toString()),
-        friendReqIndex = updatedUser.friendRequests.findIndex(id => id.toString() === userID.toString());
-
+        friendReqIndex = updatedUser.friendRequests.findIndex(id => id.toString() === userID.toString()),
+        friendReqRecievedIndex = updatedUser.friendRequestsSent.findIndex(id => id.toString() === userID.toString())
 
     delete updatedUser.friendRequests;
+    delete updatedUser.friendRequestsSent;
     delete updatedUser.friends;
 
     updatedUser.isMyFriend = myFriendIndex >= 0;
     updatedUser.reqSent = friendReqIndex >= 0;
+    updatedUser.reqRecieved = friendReqRecievedIndex >= 0;
 
 
     res.status(200).json({
@@ -67,13 +70,13 @@ exports.getSearchUsers = async (req, res, next) => {
 
     // let user = await User.find({$text: {$search: `${query}`}}).sort( { score: { $meta: "textScore" } } )
 
-    User.search(query,userLoaded, function(err, data) {
+    User.search(query, userLoaded, function (err, data) {
 
         if (err) return next(err);
 
         res.status(200).json({
             "message": "success",
-            users:data
+            users: data
         });
     })
 
@@ -220,8 +223,6 @@ exports.updateCoverPic = async (req, res, next) => {
 
 exports.addBio = async (req, res, next) => {
 
-    //TODO: req.body.bio !==""
-
 
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
@@ -236,7 +237,7 @@ exports.addBio = async (req, res, next) => {
     let bio = req.body.bio;
 
 
-    let user = await User.findById(req.user.userID)
+    let user = await User.findById(req.user.userID).select("bio")
     user.bio = bio;
     await user.save();
 
@@ -262,7 +263,7 @@ exports.sendFriendReq = async (req, res, next) => {
 
     let myUser, otherUser;
 
-    myUser = await User.findById(req.user.userID)
+    myUser = await User.findById(req.user.userID).select('friendRequestsSent firstName lastName')
 
     let reqSentIndex = myUser.friendRequestsSent.findIndex(id => otherUserId === id);
 
@@ -273,7 +274,7 @@ exports.sendFriendReq = async (req, res, next) => {
         });
     }
 
-    otherUser = await User.findById(otherUserId)
+    otherUser = await User.findById(otherUserId).select('friendRequests notifications')
     otherUser.friendRequests.push(req.user.userID);
     await otherUser.save()
     myUser.friendRequestsSent.push(otherUserId);
@@ -291,6 +292,17 @@ exports.sendFriendReq = async (req, res, next) => {
     let notificationSaved = await notification.save()
     otherUser.notifications.splice(0, 0, notification._id);
     await otherUser.save();
+
+
+    await notification.populate({
+        path: 'person',
+        model: 'User',
+        select: "firstName lastName profilePicture isOnline"
+    }).execPopulate();
+
+    let io = getIO();
+    io.in(otherUserId.toString()).emit('req', notification)
+
 
     res.status(200).json({
         "message": "success",
@@ -316,7 +328,7 @@ exports.cancelFriendReq = async (req, res, next) => {
 
     let myUser, otherUser, reqSentIndex;
 
-    myUser = await User.findById(req.user.userID)
+    myUser = await User.findById(req.user.userID).select('friendRequestsSent')
 
     reqSentIndex = myUser.friendRequestsSent.findIndex(id => otherUserId.toString() === id.toString());
 
@@ -327,7 +339,7 @@ exports.cancelFriendReq = async (req, res, next) => {
         });
     }
 
-    otherUser = await User.findById(otherUserId)
+    otherUser = await User.findById(otherUserId).select('friendRequests friends notifications')
 
     let reqIndex = otherUser.friendRequests.findIndex(id => otherUserId.toString() === id.toString());
     otherUser.friendRequests.splice(reqIndex, 1);
@@ -380,14 +392,14 @@ exports.acceptFriendReq = async (req, res, next) => {
 
     let myUser, otherUser, reqSentIndex, reqIndex;
 
-    myUser = await User.findById(req.user.userID)
-    otherUser = await User.findById(otherUserId)
+    myUser = await User.findById(req.user.userID).select('friendRequests friends notifications')
+    otherUser = await User.findById(otherUserId).select('friendRequestsSent friends')
 
     reqIndex = myUser.friendRequests.findIndex(id => otherUserId.toString() === id.toString());
     reqSentIndex = otherUser.friendRequestsSent.findIndex(id => myUserId.toString() === id.toString());
 
     if (reqSentIndex < 0) {
-       return  res.status(404).json({
+        return res.status(404).json({
             "message": "failed",
             "errorMessage": "No friend request of the user to accept."
         });
@@ -444,8 +456,8 @@ exports.declineFriendReq = async (req, res, next) => {
 
     let myUser, otherUser, reqSentIndex, reqIndex;
 
-    myUser = await User.findById(req.user.userID)
-    otherUser = await User.findById(otherUserId)
+    myUser = await User.findById(req.user.userID).select('friendRequests notifications')
+    otherUser = await User.findById(otherUserId).select('friendRequestsSent')
 
     reqIndex = myUser.friendRequests.findIndex(id => otherUserId.toString() === id.toString());
     reqSentIndex = otherUser.friendRequestsSent.findIndex(id => myUserId.toString() === id.toString());
@@ -487,6 +499,54 @@ exports.declineFriendReq = async (req, res, next) => {
     res.status(200).json({
         "message": "success",
         "isDeclined": true
+    });
+
+
+}
+
+
+exports.unfriend = async (req, res, next) => {
+
+
+    const validation = validationResult(req)
+    if (!validation.isEmpty()) {
+        let errors = validation.array();
+
+        const error = new Error(errors[0].msg);
+        error.statusCode = 422;
+        error.errors = errors;
+        return next(error);
+    }
+
+    let userToUnfriend = req.body.userID, //person who sent request
+        myUserId = req.user.userID;
+
+    let myUser, otherUser, otherUserFrndMyIndex, friendIndex;
+
+    myUser = await User.findById(req.user.userID).select('friends')
+    otherUser = await User.findById(userToUnfriend).select('friends')
+
+    friendIndex = myUser.friends.findIndex(id => userToUnfriend.toString() === id.toString());
+
+    if (friendIndex < 0) {
+        return res.status(401).json({
+            "message": "failed",
+            "errorMessage": "User not found in your friends list.",
+        });
+    }
+
+    otherUserFrndMyIndex = otherUser.friends.findIndex(id => myUserId.toString() === id.toString());
+
+    myUser.friends.splice(friendIndex, 1);
+    otherUser.friends.splice(otherUserFrndMyIndex, 1);
+
+    await otherUser.save();
+    await myUser.save()
+
+
+    res.status(200).json({
+        "message": "success",
+        "unfriend": true
     });
 
 
@@ -546,7 +606,16 @@ exports.getOnlineFriends = async (req, res, next) => {
 
 exports.getFriends = async (req, res, next) => {
 
-    let {userID} = req.user;
+    const validation = validationResult(req)
+    if (!validation.isEmpty()) {
+        let errors = validation.array()
+        const error = new Error(errors[0].msg);
+        error.statusCode = 422;
+        error.errors = errors;
+        return next(error);
+    }
+
+    let userID = req.query.profileID;
     let skip = 0;
     if (req.query.loadedFriends) skip = Number(req.query.loadedFriends);
 
@@ -556,7 +625,7 @@ exports.getFriends = async (req, res, next) => {
             path: 'friends',
             options: {
                 limit: 20,
-                skip:skip
+                skip: skip
             },
             select: "firstName lastName profilePicture bio gender isOnline",
             model: "User"
@@ -572,8 +641,16 @@ exports.getFriends = async (req, res, next) => {
 
 
 exports.getFriendsCount = async (req, res, next) => {
+    const validation = validationResult(req)
+    if (!validation.isEmpty()) {
+        let errors = validation.array()
+        const error = new Error(errors[0].msg);
+        error.statusCode = 422;
+        error.errors = errors;
+        return next(error);
+    }
 
-    let {userID} = req.user;
+    let userID = req.query.profileID;
 
     let userFiends = await User.findById(userID)
         .select("friends")

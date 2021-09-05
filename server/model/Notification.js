@@ -1,6 +1,5 @@
 const {model, Schema} = require('mongoose')
 
-
 const Notification = new Schema({
     person: { //user who made a notification event
         type: Schema.Types.ObjectId,
@@ -26,10 +25,6 @@ const Notification = new Schema({
     notificationPostID: {  // where notification link will take you on front end
         type: String,
     },
-    isFriendReq: {
-        type: Boolean,
-        default: false
-    }
 
 })
 

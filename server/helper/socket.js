@@ -20,25 +20,9 @@ const initiate=(server) => {
     });
 
 
-    io.on('connection', (socket) => {
+    io.on('connection', async (socket) => {
         // console.log('a user connected');
 
-        socket.on('disconnect', async () => {
-            if (!socket.userID) return;
-
-            redisClient.lrem(socket.userID, 1, socket.id);
-            let length = await llenAsync(socket.userID);
-
-            if (Number(length) === 0) {
-                socket.emit("offline", socket.userID);
-
-                let user = await User.findById(socket.userID);
-                user.isOnline = false;
-                user.save();
-
-                // console.log('user disconnected');
-            }
-        });
 
         socket.on('join', async (data) => {
 
@@ -51,14 +35,14 @@ const initiate=(server) => {
             }
 
             socket.userID = isAuth.userID;
-            // console.log(socket.userID)
+            socket.join(isAuth.userID);
 
             redisClient.lpush(isAuth.userID, socket.id);
             let user = await User.findById(isAuth.userID);
             user.isOnline = true;
-            user.save();
-            socket.join(isAuth.userID);
+            await user.save();
 
+            notifyFriends('userOnline',isAuth.userID);
         });
 
         socket.on('chat message', async (msg) => {
@@ -87,11 +71,56 @@ const initiate=(server) => {
             socket.in(data.to).emit('notifyTypingStop');
         })
 
+        socket.on('disconnect', async () => {
+            if (!socket.userID) return;
+
+            redisClient.lrem(socket.userID, 1, socket.id);
+            let length = await llenAsync(socket.userID);
+
+            if (Number(length) === 0) {
+                socket.emit("offline", socket.userID);
+
+                let user = await User.findById(socket.userID);
+                user.isOnline = false;
+                await user.save();
+
+                notifyFriends('userOffline',socket.userID);
+            }
+        });
+
 
     })
 }
 
 const getIO = () => io;
+
+
+
+let notifyFriends = async (eventType, myID) => {
+
+
+
+    let user = await User.findById(myID).select('firstName lastName profilePicture isOnline friends').lean()
+
+
+    let friends = [...user.friends];
+    delete user.friends;
+
+
+    if (eventType!=="userOnline"){
+        // delete user.firstName;
+        delete user.lastName;
+        delete user.profilePicture;
+        delete user.isOnline;
+    }
+
+
+    friends.forEach(friendID => {
+        io.in(friendID.toString()).emit(eventType, user)
+    })
+
+}
+
 
 module.exports={
     initiate,
