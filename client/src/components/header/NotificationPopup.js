@@ -1,11 +1,13 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {Link} from "react-router-dom"
+
 
 import timeDifference from "../../helper/timeDiff";
 import Avatar from "../profile/Avatar";
 import configs from "../../assets/config/configs";
 import axios from "../../helper/axios";
 import handleAxiosError from "../../helper/handleAxiosError";
+import Loading from "../ui/Loading";
 
 
 function NotificationPopup(props) {
@@ -13,6 +15,10 @@ function NotificationPopup(props) {
 
     const [reqAccepted, setReqAccepted] = useState(undefined)
     const [reqDeclined, setReqDeclined] = useState(undefined)
+
+    useEffect(() => {
+
+    }, [])
 
     const acceptReq = (id, notificatitionID) => {
 
@@ -59,15 +65,15 @@ function NotificationPopup(props) {
     }
 
     return (
-        <div className="notificationPopup">
+        <div className="notificationPopup" ref={props.popupRef}>
 
             {
                 props.notifications.map(item => {
 
-                    let notiUrl="/post/"+item.notificationPostID;
+                    let notiUrl = "/post/" + item.notificationPostID;
 
-                    if(item.notificationType==="req")
-                        notiUrl="/profile/"+item.notificationPostID;
+                    if (item.notificationType === "req")
+                        notiUrl = "/profile/" + item.notificationPostID;
 
 
                     return (
@@ -111,6 +117,12 @@ function NotificationPopup(props) {
 
                 })
             }
+
+            {
+                props.isLoading ?
+                    <Loading/> : null
+            }
+
         </div>
     );
 

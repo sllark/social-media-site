@@ -41,6 +41,8 @@ router.post('/unfriend', isAuth, validateObjectID("userID"), asyncHandler(profil
 
 router.get('/getNotifications', isAuth, asyncHandler(profileControllers.getNotifications))
 
+router.get('/getTotalNotifications', isAuth, asyncHandler(profileControllers.getTotalNotifications))
+
 router.get('/getOnlineFriends', isAuth, asyncHandler(profileControllers.getOnlineFriends))
 
 router.get('/getFriends', isAuth, validateObjectID("profileID"), asyncHandler(profileControllers.getFriends))

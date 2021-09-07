@@ -572,7 +572,8 @@ class FeedPost extends React.Component {
                     this.state.showLikesModal ?
                         <Modal
                             showModal={this.state.showLikesModal}
-                            changeShowModal={value => this.setState({showLikesModal: value})} modalRef={this.modalRef}>
+                            changeShowModal={value => this.setState({showLikesModal: value})}
+                            modalRef={this.modalRef}>
 
                             <h2>People who liked the post</h2>
 

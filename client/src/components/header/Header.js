@@ -1,4 +1,5 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef} from "react";
+import useState from 'react-usestateref'
 import {Link, Redirect} from "react-router-dom"
 
 import axios from "../../helper/axios";
@@ -23,17 +24,22 @@ function Header(props) {
     const [isFocused, changeFocused] = useState(false);
     const [redirect, changeRedirect] = useState(null);
     const [notifiPopup, setNotifiPopup] = useState(false);
-    const [notifications, setNotifications] = useState([]);
+
+    const [notifications, setNotifications,notificationsRef] = useState([]);
+    const [totalNotifications, setTotalNotifications] = useState(0);
+    const [loadingNotifications, setLoadingNotifications] = useState(false);
 
     const [responseStatus, setResponseStatus] = useState("");
     const [responseMsg, setResponseMsg] = useState("");
 
 
     const wrapperRef = useRef(null);
+    const notificationPopupRef = useRef(null);
 
     useEffect(() => {
         document.addEventListener('keyup', searchOnEnter)
-        getNotifications();
+        getNotifications()
+        getTotalNotifications()
         let query = getQuery(props.history.location.search);
         changeQueryValue(query || "");
 
@@ -56,26 +62,53 @@ function Header(props) {
 
             if (filtered.length === prevNoti.length) {
                 setNotifications([props.notification.notification, ...notifications])
-                console.log('in 1')
+                setTotalNotifications(totalNotifications + 1)
 
                 let type = props.notification.eventType;
                 if (type === "postShared" || type === "req") {
-                    console.log('in')
                     setResponsePreview("message", props.notification.notification.content)
                 }
 
-            } else if (filtered.length < prevNoti.length)
+            } else if (filtered.length < prevNoti.length) {
                 setNotifications(filtered)
-
+                setTotalNotifications(totalNotifications + 1)
+            }
 
         }
 
     }, [props.notification])
 
 
+    useEffect(() => {
+
+        if (notifiPopup) {
+            notificationPopupRef.current.addEventListener('scroll', scrollModal)
+            //event removed automatically when element is removed
+        } else {
+            setLoadingNotifications(false)
+        }
+
+
+    }, [notifiPopup])
+
+
     useOutsideAlerter(wrapperRef, () => {
         setNotifiPopup(false)
     });
+
+    let scrollModal = () => {
+
+
+        let obj = notificationPopupRef.current;
+        if (obj
+            && obj.scrollTop >= (obj.scrollHeight - obj.offsetHeight)
+            && totalNotifications > notificationsRef.current.length
+            && !loadingNotifications) {
+            getNotifications(notifications.length)
+        }
+
+    }
+
 
     let searchEvent = () => {
         if (queryValue.trim().length < 1) return;
@@ -88,11 +121,34 @@ function Header(props) {
     }
 
 
-    const getNotifications = () => {
+    let getNotifications = (loaded = 0) => {
+        setLoadingNotifications(true);
 
-        axios.get("/getNotifications")
+        axios
+            .get("/getNotifications", {
+                params: {
+                    loaded: loaded
+                }
+            })
             .then(result => {
-                setNotifications(result.data.notifications)
+                setNotifications(prevNoti => ([...prevNoti, ...result.data.notifications]))
+            })
+            .catch(error => {
+                handleAxiosError(error, setResponsePreview, "Notifications Loading Failed...")
+            })
+            .then(() => {
+                setLoadingNotifications(false);
+            })
+
+    }
+
+
+    const getTotalNotifications = () => {
+
+        axios
+            .get("/getTotalNotifications")
+            .then(result => {
+                setTotalNotifications(result.data.total)
             })
             .catch(error => {
                 handleAxiosError(error, setResponsePreview, "Notifications Loading Failed...")
@@ -197,6 +253,8 @@ function Header(props) {
                                         showPopup={setNotifiPopup}
                                         hideItem={hideItem}
                                         setRequestStatus={props.setRequestStatus}
+                                        popupRef={notificationPopupRef}
+                                        isLoading={loadingNotifications}
                                     />
                                     : null
 

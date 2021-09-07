@@ -302,7 +302,6 @@ exports.sendFriendReq = async (req, res, next) => {
     }).execPopulate();
 
 
-
     res.status(200).json({
         "message": "success",
     });
@@ -368,14 +367,13 @@ exports.cancelFriendReq = async (req, res, next) => {
     await myUser.save()
 
 
-
     res.status(200).json({
         "message": "success",
     });
 
 
     let io = getIO();
-    io.in(otherUserId.toString()).emit('reqCancel', {notification:notifi})
+    io.in(otherUserId.toString()).emit('reqCancel', {notification: notifi})
 
 }
 
@@ -438,13 +436,12 @@ exports.acceptFriendReq = async (req, res, next) => {
     await myUser.save()
 
 
-
     res.status(200).json({
         "message": "success",
     });
 
     let io = getIO();
-    io.in(otherUserId.toString()).emit('reqAccepted', {notification:notifi})
+    io.in(otherUserId.toString()).emit('reqAccepted', {notification: notifi})
 
 }
 
@@ -513,7 +510,7 @@ exports.declineFriendReq = async (req, res, next) => {
     });
 
     let io = getIO();
-    io.in(otherUserId.toString()).emit('reqDeclined', {notification:notifi})
+    io.in(otherUserId.toString()).emit('reqDeclined', {notification: notifi})
 
 }
 
@@ -564,7 +561,7 @@ exports.unfriend = async (req, res, next) => {
 
 
     let io = getIO();
-    io.in(userToUnfriend).emit('unfriend', {notification:{}})
+    io.in(userToUnfriend).emit('unfriend', {notification: {}})
 
 }
 
@@ -572,25 +569,50 @@ exports.unfriend = async (req, res, next) => {
 exports.getNotifications = async (req, res, next) => {
 
     let userID = req.user.userID
+    let max = 12,
+        skip = Number(req.query.loaded) || 0;
 
-    let user = await User.findById(userID).select('notifications')
 
+    let user = await User.findById(userID)
+        .select('notifications')
+        .populate({
+            path: 'notifications',
+            options: {
+                sort: {_id: -1},
+                skip: skip,
+                limit: max
+            },
+            model: 'Notification',
+            populate: {
+                path: 'person',
+                model: 'User',
+                select: 'profilePicture'
+            }
+        })
 
-    user = await user.populate({
-        path: 'notifications',
-        model: 'Notification',
-    }).execPopulate()
-
-    user = await user.populate({
-        path: 'notifications.person',
-        model: 'User',
-        select: ['profilePicture']
-    }).execPopulate()
-
+    console.log(user)
 
     res.status(200).json({
         "message": "success",
         notifications: user.notifications
+    });
+}
+
+exports.getTotalNotifications = async (req, res, next) => {
+
+    let userID = req.user.userID
+
+
+    let notifications = await User.aggregate()
+        .match({_id: mongoose.Types.ObjectId(userID)})
+        .project({notifications: {$size: '$notifications'}})
+
+
+    let total = notifications[0].notifications;
+
+    res.status(200).json({
+        "message": "success",
+        total: total || 0
     });
 }
 
