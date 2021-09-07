@@ -9,9 +9,10 @@ const CommentBy = require('../model/CommentBy');
 const Notification = require('../model/Notification');
 const Message = require('../model/Message');
 
-const {llenAsync} = require('../helper/redis')
+const {redisClient, llenAsync} = require('../helper/redis')
 const getChatID = require('../helper/getChatID');
 const {getIO} = require('../helper/socket')
+const emitSocketEvents = require('../helper/emitSocketEvents')
 
 
 exports.createPost = async (req, res, next) => {
@@ -165,6 +166,9 @@ exports.getProfilePosts = async (req, res, next) => {
 
     let likeIndex = -1;
     posts.forEach(post => {
+        redisClient.sadd(post._id.toString(), req.user.userID.toString())
+        redisClient.sadd(req.user.userID.toString() + "-posts", post._id.toString())
+
         post.toObject();
         likeIndex = -1;
         likeIndex = post.likes.by.findIndex(id => id.toString() === req.user.userID.toString())
@@ -199,8 +203,6 @@ exports.likePost = async (req, res, next) => {
         myUser = null,
         originalPost = null;
 
-    let io = getIO();
-
     originalPost = await Post.findById(postID)
 
     let myIndex = originalPost.likes.by.findIndex(id => id.toString() === userID.toString())
@@ -211,33 +213,33 @@ exports.likePost = async (req, res, next) => {
         originalPost.markModified('likes');
 
         await originalPost.save()
-
+        let notification;
         if (userID.toString() !== originalPost.user.toString()) {
 
             postAuthor = await User.findById(originalPost.user).exec()
 
-            let notifi = await Notification.findOne({
+            notification = await Notification.findOne({
                 notificationType: "like",
                 person: userID,
                 notificationPostID: originalPost._id
             })
 
-            io.in(postAuthor._id.toString()).emit('postUnliked', notifi);
 
-            let notificationIndex = postAuthor.notifications.findIndex(id => id.toString() === notifi._id.toString())
+            let notificationIndex = postAuthor.notifications.findIndex(id => id.toString() === notification._id.toString())
             postAuthor.notifications.splice(notificationIndex, 1);
             await postAuthor.save();
 
-            await Notification.findByIdAndDelete({_id: notifi._id});
-
-
+            await Notification.findByIdAndDelete({_id: notification._id});
         }
 
 
-        return res.status(200).json({
+        res.status(200).json({
             "message": "like remove success"
         });
 
+        emitSocketEvents(originalPost.user, userID, postID, 'postUnliked', {notification})
+
+        return;
     }
 
     originalPost.likes.count += 1;
@@ -248,9 +250,13 @@ exports.likePost = async (req, res, next) => {
 
     if (userID.toString() === originalPost.user.toString()) {
 
-        return res.status(200).json({
+        res.status(200).json({
             "message": "success"
         });
+
+        emitSocketEvents(originalPost.user, userID, postID, 'postLiked', {notification: {}})
+
+        return;
 
     }
 
@@ -271,18 +277,11 @@ exports.likePost = async (req, res, next) => {
     await postAuthor.save();
 
 
-    await notification.populate({
-        path: 'person',
-        model: 'User',
-        select: "firstName lastName profilePicture isOnline"
-    }).execPopulate();
-
-
-    io.in(postAuthor._id.toString()).emit('postLiked', notification)
-
     res.status(200).json({
         "message": "success"
     });
+
+    emitSocketEvents(originalPost.user, userID, postID, 'postLiked', {notification})
 
 }
 
@@ -364,7 +363,10 @@ exports.sharePost = async (req, res, next) => {
     }).execPopulate();
 
 
-
+    res.status(200).json({
+        "message": "success",
+        post: newPost
+    });
 
     // populate for alert
     await notification.populate({
@@ -373,15 +375,9 @@ exports.sharePost = async (req, res, next) => {
         select: "firstName lastName profilePicture isOnline"
     }).execPopulate();
 
+
     let io = getIO();
-    io.in(postAuthor._id.toString()).emit('postShared', notification)
-
-
-    res.status(200).json({
-        "message": "success",
-        post: newPost
-    });
-
+    io.in(postAuthor._id.toString()).emit('postShared', {notification, personData: notification.person});
 }
 
 
@@ -430,15 +426,21 @@ exports.commentPost = async (req, res, next) => {
         await newComment.populate({
             path: 'person',
             model: 'User',
-            select: ['firstName', 'lastName']
+            select: "firstName lastName profilePicture isOnline"
         }).execPopulate()
 
-        return res.status(200).json({
+        res.status(200).json({
             "message": "success",
             comment: newComment
         })
 
 
+        emitSocketEvents(fetchedPost.user, userID, postID, 'postComment', {
+            comment: newComment,
+            notification: {}
+        })
+
+        return;
     }
 
 
@@ -463,11 +465,18 @@ exports.commentPost = async (req, res, next) => {
     await newComment.populate({
         path: 'person',
         model: 'User',
-        select: ['firstName', 'lastName']
+        select: "firstName lastName profilePicture isOnline"
     }).execPopulate()
+
 
     res.status(200).json({
         "message": "success",
+        comment: newComment
+    })
+
+
+    emitSocketEvents(fetchedPost.user, userID, postID, 'postComment', {
+        notification: notification,
         comment: newComment
     })
 
@@ -505,13 +514,15 @@ exports.likeComment = async (req, res, next) => {
         comment.markModified('comments');
         await comment.save();
 
+        let notifi;
         // if this like is not by user on its own comment (no notification would be there in this case)
         if (userID.toString() !== comment.person.toString()) {
 
             //removing notification of the like
-            let notifi = await Notification.findOne({
+            notifi = await Notification.findOne({
                 notificationType: "commentLike",
                 person: userID,
+                commentID: commentID,
                 notificationPostID: comment.postID
             })
 
@@ -525,11 +536,18 @@ exports.likeComment = async (req, res, next) => {
         }
 
 
-        return res.status(200).json({
+        res.status(200).json({
             "message": "success",
             commentLikes: comment.likes
         });
 
+        emitSocketEvents(comment.person, userID, comment.postID, 'commentUnliked', {
+            notification: notifi,
+            commentUpdateBy: userID,
+            commentID
+        })
+
+        return
     }
 
 
@@ -543,12 +561,17 @@ exports.likeComment = async (req, res, next) => {
     // no notification needed if user liked its own comment
     if (userID.toString() === comment.person.toString()) {
 
-        return res.status(200).json({
+        res.status(200).json({
             "message": "success",
             commentLikes: comment.likes
-
         });
 
+        emitSocketEvents(comment.person, userID, comment.postID, 'commentLiked', {
+            notification: {},
+            commentUpdateBy: userID,
+            commentID
+        })
+        return;
     }
 
 
@@ -560,6 +583,7 @@ exports.likeComment = async (req, res, next) => {
         notificationType: 'commentLike',
         content: `${myUser.firstName} ${myUser.lastName} Liked your comment.`,
         notificationPostID: comment.postID,
+        commentID: commentID,
         date: Date.now()
     })
 
@@ -567,10 +591,17 @@ exports.likeComment = async (req, res, next) => {
     commentAuthor.notifications.splice(0, 0, notification._id);
     await commentAuthor.save();
 
+
     res.status(200).json({
         "message": "success",
         commentLikes: comment.likes
     });
+
+    emitSocketEvents(comment.person, userID, comment.postID, 'commentLiked', {
+        notification,
+        commentUpdateBy: userID,
+        commentID
+    })
 
 }
 
@@ -606,6 +637,9 @@ exports.getSinglePosts = async (req, res, next) => {
     let likeIndex = -1;
     likeIndex = post.likes.by.findIndex(id => id.toString() === req.user.userID.toString())
     post.likes.likedByMe = likeIndex >= 0
+
+    redisClient.sadd(post._id.toString(), req.user.userID.toString())
+    redisClient.sadd(req.user.userID.toString() + "-posts", post._id.toString())
 
     res.status(200).json({
         "message": "success",
@@ -656,9 +690,14 @@ exports.getFeedPosts = async (req, res, next) => {
 
     let likeIndex = -1;
     posts.forEach(post => {
+        redisClient.sadd(post._id.toString(), req.user.userID.toString())
+        redisClient.sadd(req.user.userID.toString() + "-posts", post._id.toString())
+
+        post.toObject();
         likeIndex = -1;
         likeIndex = post.likes.by.findIndex(id => id.toString() === req.user.userID.toString())
         post.likes.likedByMe = likeIndex >= 0
+        delete post.likes.by;
     })
 
 
@@ -671,6 +710,8 @@ exports.getFeedPosts = async (req, res, next) => {
 
 
 exports.getFeedPostsCount = async (req, res, next) => {
+
+
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
         let errors = validation.array()

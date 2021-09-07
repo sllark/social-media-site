@@ -5,12 +5,12 @@ const getChatId = require('./getChatID')
 
 const Message = require('../model/Message');
 const User = require('../model/User');
-const {redisClient, llenAsync} = require('./redis')
+const {redisClient, llenAsync, smembersAsync} = require('./redis')
 
 
 let io = null;
 
-const initiate=(server) => {
+const initiate = (server) => {
 
     io = new Server(server, {
         cors: {
@@ -21,7 +21,6 @@ const initiate=(server) => {
 
 
     io.on('connection', async (socket) => {
-        // console.log('a user connected');
 
 
         socket.on('join', async (data) => {
@@ -42,13 +41,11 @@ const initiate=(server) => {
             user.isOnline = true;
             await user.save();
 
-            notifyFriends('userOnline',isAuth.userID);
+            notifyFriends('userOnline', isAuth.userID);
         });
 
         socket.on('chat message', async (msg) => {
-            console.log('message=', msg)
             let chatID = getChatId(msg.to, msg.from);
-            console.log('message=', chatID);
 
             let newMsg = new Message({
                 chatID: chatID,
@@ -84,7 +81,17 @@ const initiate=(server) => {
                 user.isOnline = false;
                 await user.save();
 
-                notifyFriends('userOffline',socket.userID);
+                notifyFriends('userOffline', socket.userID);
+
+
+                let userFetchedPosts = await smembersAsync(socket.userID+"-posts");
+
+                // removing user data from redis
+                userFetchedPosts.forEach(item=>{
+                    redisClient.srem(item.toString(), socket.userID.toString());
+                })
+                redisClient.del(socket.userID+"-posts");
+
             }
         });
 
@@ -95,9 +102,7 @@ const initiate=(server) => {
 const getIO = () => io;
 
 
-
 let notifyFriends = async (eventType, myID) => {
-
 
 
     let user = await User.findById(myID).select('firstName lastName profilePicture isOnline friends').lean()
@@ -107,7 +112,7 @@ let notifyFriends = async (eventType, myID) => {
     delete user.friends;
 
 
-    if (eventType!=="userOnline"){
+    if (eventType !== "userOnline") {
         // delete user.firstName;
         delete user.lastName;
         delete user.profilePicture;
@@ -122,7 +127,7 @@ let notifyFriends = async (eventType, myID) => {
 }
 
 
-module.exports={
+module.exports = {
     initiate,
     getIO
 }

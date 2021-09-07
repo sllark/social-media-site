@@ -24,7 +24,9 @@ function NotificationPopup(props) {
             .then(result => {
                 if (result.data.message === "success") {
                     setReqAccepted(notificatitionID)
+                    props.setRequestStatus("accepted")
                     props.hideItem(notificatitionID)
+                    props.showPopup(false)
                 }
             })
             .catch(error => {
@@ -43,7 +45,9 @@ function NotificationPopup(props) {
             .then(result => {
                 if (result.data.message === "success") {
                     setReqDeclined(notificatitionID)
+                    props.setRequestStatus("declined")
                     props.hideItem(notificatitionID)
+                    props.showPopup(false)
                 }
             })
             .catch(error => {
@@ -54,7 +58,6 @@ function NotificationPopup(props) {
 
     }
 
-    //TODO: make notification text a link so it take user to respective post or profile
     return (
         <div className="notificationPopup">
 
@@ -81,7 +84,7 @@ function NotificationPopup(props) {
                             </Link>
 
                             <div className="notificationPopup__item__content">
-                                <Link to={notiUrl}>
+                                <Link to={notiUrl} onClick={() => props.showPopup(false)}>
                                     <p>
                                         {item.content}
                                     </p>

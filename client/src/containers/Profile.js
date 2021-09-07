@@ -1,5 +1,5 @@
 import React from "react";
-import {Redirect,Link} from "react-router-dom";
+import {Link, Redirect} from "react-router-dom";
 
 import axios from "../helper/axios";
 
@@ -7,7 +7,6 @@ import FillScreen from "../components/FillScreen";
 import CreateNewPost from "../components/feed/CreateNewPost";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import FeedPost from "../components/feed/FeedPost";
-import Sidebar from "../components/general/Sidebar";
 import Loading from "../components/ui/Loading";
 import ShowResponse from "../components/ui/ShowResponse";
 import handleAxiosError from "../helper/handleAxiosError";
@@ -28,10 +27,77 @@ class Profile extends React.Component {
                 lastName: "."
             },
             responseMsg: "",
-            responseStatus: ""
+            responseStatus: "",
+            commentLikeUpdate: null,
+            commentAdded: null,
+
         }
 
         this.scrollEvent = null;
+
+    }
+
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+
+        if (this.props.onlineUser && prevProps.onlineUser !== this.props.onlineUser) {
+
+            let posts = [...this.state.posts]
+            posts = posts.map(item => {
+
+                if (item.user._id === this.props.onlineUser._id) {
+                    item.user.isOnline = true
+                }
+
+
+                item.comments.by.forEach((comment, index) => {
+                    if (comment.person._id === this.props.onlineUser._id)
+                        comment.person.isOnline = true
+                })
+
+                return item;
+
+            })
+            this.setState({posts: posts})
+
+        }
+
+
+        if (this.props.offlineUser && prevProps.offlineUser !== this.props.offlineUser) {
+
+
+            let posts = [...this.state.posts]
+            posts = posts.map(item => {
+
+                if (item.user._id === this.props.offlineUser._id) {
+                    item.user.isOnline = false
+                }
+
+
+                item.comments.by.forEach(comment => {
+                    if (comment.person._id === this.props.offlineUser._id)
+                        comment.person.isOnline = false
+                })
+
+                return item;
+
+            })
+            this.setState({posts: posts})
+
+        }
+
+
+        if (this.props.notification && prevProps.notification !== this.props.notification) {
+            this.updatePostRealtime(this.props.notification);
+        }
+
+
+        if (this.props.requestStatus && prevProps.requestStatus !== this.props.requestStatus) {
+            if (this.props.requestStatus === "accepted") this.reqAccepted();
+            else if (this.props.requestStatus === "declined") this.reqDeclined();
+
+        }
+
 
     }
 
@@ -56,6 +122,81 @@ class Profile extends React.Component {
         window.removeEventListener('scroll', this.loadMore);
     }
 
+    updatePostRealtime = (data) => {
+
+        if (data.eventType === "postLiked")
+            this.postLikeEvent(data, true);
+        if (data.eventType === "postUnliked")
+            this.postLikeEvent(data, false);
+        else if (data.eventType === "commentLiked")
+            this.setState({commentLikeUpdate: {...data, isLiked: true}})
+        else if (data.eventType === "commentUnliked")
+            this.setState({commentLikeUpdate: {...data, isLiked: false}})
+        else if (data.eventType === "postComment")
+            this.setState({commentAdded: data.comment})
+        else if (data.eventType === "req")
+            this.reqRecived();
+        else if (data.eventType === "reqCancel")
+            this.reqDeclined();
+        else if (data.eventType === "reqAccepted")
+            this.reqAccepted();
+        else if (data.eventType === "reqDeclined")
+            this.reqDeclined();
+        else if (data.eventType === "unfriend")
+            this.reqDeclined();
+
+
+    }
+
+    postLikeEvent = (data, isLiked) => {
+
+        let posts = [...this.state.posts];
+        let postIndex = posts.findIndex(item => item._id === data.postID);
+
+        if (postIndex < 0) return;
+
+        let postToUpdate = {...posts[postIndex]}
+        let likes = {...postToUpdate.likes}
+
+
+        if (isLiked) {
+            postToUpdate.realtimeLike = data.personData
+            likes.count += 1
+        } else {
+            postToUpdate.realtimeUnlike = data.personData
+            likes.count -= 1
+        }
+
+        postToUpdate.likes = {...likes}
+        posts[postIndex] = postToUpdate;
+
+        this.setState({posts})
+    }
+
+
+    reqRecived = (event) => {
+        let user = {...this.state.user}
+        user.reqRecieved = false
+        user.isMyFriend = false
+        user.reqRecieved = true
+        this.setState({user})
+    }
+
+    reqAccepted = (event) => {
+        let user = {...this.state.user}
+        user.reqRecieved = false
+        user.reqSent = false
+        user.isMyFriend = true
+        this.setState({user})
+    }
+
+    reqDeclined = (event) => {
+        let user = {...this.state.user}
+        user.reqRecieved = false
+        user.reqSent = false
+        user.isMyFriend = false
+        this.setState({user})
+    }
 
     getUser = () => {
         let id = this.props.match.params.id;
@@ -69,6 +210,8 @@ class Profile extends React.Component {
             })
             .then(result => {
 
+                console.log(result.data.user);
+
                 this.setState({
                     user: result.data.user
                 })
@@ -76,7 +219,7 @@ class Profile extends React.Component {
             })
             .catch(error => {
 
-                handleAxiosError(error,this.setResponsePreview,"Loading Failed...")
+                handleAxiosError(error, this.setResponsePreview, "Loading Failed...")
 
             })
 
@@ -110,7 +253,7 @@ class Profile extends React.Component {
 
             })
             .catch(error => {
-                handleAxiosError(error,this.setResponsePreview,"Loading Failed...")
+                handleAxiosError(error, this.setResponsePreview, "Loading Failed...")
             })
             .then(() => {
                 this.setState({
@@ -165,7 +308,7 @@ class Profile extends React.Component {
     }
 
 
-    updateUser = (property,value) => {
+    updateUser = (property, value) => {
         let user = {...this.state.user};
         user[property] = value;
 
@@ -208,7 +351,6 @@ class Profile extends React.Component {
                 <div className="home__container d-flex flex-row justify-end">
 
 
-
                     <div className="mainPage">
 
                         <div className="mainPage__container">
@@ -245,6 +387,12 @@ class Profile extends React.Component {
                                                 post={post}
                                                 removePost={this.removePost}
                                                 setResponsePreview={this.setResponsePreview}
+                                                commentLikeUpdate={
+                                                    this.state.commentLikeUpdate?.postID === post._id ? this.state.commentLikeUpdate : null
+                                                }
+                                                commentUpdate={
+                                                    this.state.commentAdded?.postID === post._id ? this.state.commentAdded : null
+                                                }
                                             />)
                                     }
                                     {
@@ -286,7 +434,8 @@ class Profile extends React.Component {
                                     }
 
                                     <p className="mainPage__body__about__item bday">
-                                        <Link to={"/friends/"+this.state.user._id}>See Friends of {this.state.user.firstName}</Link>
+                                        <Link to={"/friends/" + this.state.user._id}>See Friends
+                                            of {this.state.user.firstName}</Link>
                                     </p>
 
 

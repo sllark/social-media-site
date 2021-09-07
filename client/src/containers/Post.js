@@ -20,7 +20,55 @@ class Feed extends React.Component {
             isLoading: false,
             responseMsg: "",
             responseStatus: "",
+            commentLikeUpdate:null,
+            commentAdded: null,
         }
+
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+
+        if (this.props.onlineUser && prevProps.onlineUser !== this.props.onlineUser) {
+
+            let post = {...this.state.post}
+
+            if (post.user._id === this.props.onlineUser._id) {
+                post.user.isOnline = true
+            }
+
+
+            post.comments.by.forEach((comment, index) => {
+                if (comment.person._id === this.props.onlineUser._id)
+                    comment.person.isOnline = true
+            })
+
+            this.setState({post})
+
+        }
+
+
+        if (this.props.offlineUser && prevProps.offlineUser !== this.props.offlineUser) {
+
+
+            let post = {...this.state.post}
+            if (post.user._id === this.props.offlineUser._id) {
+                post.user.isOnline = false
+            }
+
+
+            post.comments.by.forEach(comment => {
+                if (comment.person._id === this.props.offlineUser._id)
+                    comment.person.isOnline = false
+            })
+            this.setState({post: post})
+
+        }
+
+
+        if (this.props.notification && prevProps.notification !== this.props.notification) {
+            this.updatePostRealtime(this.props.notification);
+        }
+
 
     }
 
@@ -52,6 +100,45 @@ class Feed extends React.Component {
 
     }
 
+
+    updatePostRealtime = (data) => {
+
+        if (data.eventType === "postLiked")
+            this.postLikeEvent(data, true);
+        if (data.eventType === "postUnliked")
+            this.postLikeEvent(data, false);
+        else if (data.eventType === "commentLiked")
+            this.setState({commentLikeUpdate: {...data, isLiked: true}})
+        else if (data.eventType === "commentUnliked")
+            this.setState({commentLikeUpdate: {...data, isLiked: false}})
+        else if (data.eventType === "postComment")
+            this.setState({commentAdded: data.comment})
+
+
+    }
+
+
+    postLikeEvent = (data, isLiked) => {
+
+        let post = {...this.state.post};
+
+        if (post._id !== data.postID) return;
+
+        let likes = {...post.likes}
+
+
+        if (isLiked) {
+            post.realtimeLike = data.personData
+            likes.count += 1
+        } else {
+            post.realtimeUnlike = data.personData
+            likes.count -= 1
+        }
+
+        post.likes = {...likes}
+
+        this.setState({post})
+    }
 
 
     setResponsePreview = (status, msg) => {
@@ -90,6 +177,12 @@ class Feed extends React.Component {
                                     post={this.state.post}
                                     removePost={this.removePost}
                                     setResponsePreview={this.setResponsePreview}
+                                    commentLikeUpdate={
+                                        this.state.commentLikeUpdate?.postID === this.state.post._id ? this.state.commentLikeUpdate : null
+                                    }
+                                    commentUpdate={
+                                        this.state.commentAdded?.postID === this.state.post._id ? this.state.commentAdded : null
+                                    }
                                 /> : null
                         }
 

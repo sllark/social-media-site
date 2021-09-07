@@ -6,15 +6,15 @@ const CommentBy = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'User',
     },
-    postID:{
+    postID: {
         type: Schema.Types.ObjectId,
         ref: 'Post',
     },
     content: String,
     likes: {
-        count:{
-            type:Number,
-            default:0
+        count: {
+            type: Number,
+            default: 0
         },
         by: [
             {

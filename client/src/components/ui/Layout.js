@@ -12,6 +12,7 @@ function Layout(props) {
 
     const [socket, setSocket] = useState(null);
     const [notifi, setNotifi] = useState(null);
+    const [requestStatus, setRequestStatus] = useState(null);
 
     useEffect(() => {
         setOnlineUser(props.usersOnline[0]);
@@ -30,20 +31,30 @@ function Layout(props) {
     }, [props.socket])
 
 
+    const addSocketEvents = () => {
 
-    const addSocketEvents = ()=>{
+        props.socket.on('postLiked', (data) => newNotification(data, 'postLiked'))
+        props.socket.on('postUnliked', (data) => newNotification(data, 'postUnliked'))
+        props.socket.on('postComment', (data) => newNotification(data, 'postComment'))
+        props.socket.on('commentLiked', (data) => newNotification(data, 'commentLiked'))
+        props.socket.on('commentUnliked', (data) => newNotification(data, 'commentUnliked'))
+        props.socket.on('postShared', (data) => newNotification(data, 'postShared'))
+        props.socket.on('req', (data) => newNotification(data, 'req'))
+        props.socket.on('reqCancel', (data) => newNotification(data, 'reqCancel'))
+        props.socket.on('reqAccepted', (data) => newNotification(data, 'reqAccepted'))
+        props.socket.on('reqDeclined', (data) => newNotification(data, 'reqDeclined'))
+        props.socket.on('unfriend', (data) => newNotification(data, 'unfriend'))
 
-        props.socket.on('postLiked',newNotification)
-        props.socket.on('postUnliked',newNotification)
-        props.socket.on('postShared',newNotification)
-        props.socket.on('req',newNotification)
 
     }
 
-    const newNotification = (data)=>{
+    const newNotification = (data, eventType) => {
+        data = {
+            ...data,
+            eventType
+        }
         setNotifi(data);
     }
-
 
 
     return (
@@ -54,6 +65,7 @@ function Layout(props) {
                     menuRightOpen={menuRightOpen}
                     setMenuRightOpen={setMenuRightOpen}
                     notification={notifi}
+                    setRequestStatus={setRequestStatus}
             />
             <Sidebar history={props.history}
                      isVisible={menuLeftOpen}
@@ -64,7 +76,8 @@ function Layout(props) {
                 React.cloneElement(props.children, {
                     onlineUser: onlineUser,
                     offlineUser: offlineUser,
-                    notification:notifi
+                    notification: notifi,
+                    requestStatus: requestStatus
                 })
             }
 

@@ -65,7 +65,10 @@ class FeedPost extends React.Component {
             this.realtimePostUnlike()
         else if (prevProps.post.shares?.count < this.props.post.shares?.count)
             this.realtimePostShare()
-
+        else if (prevProps.commentLikeUpdate !== this.props.commentLikeUpdate)
+            this.realtimeCommentUpdate()
+        else if (prevProps.commentUpdate?._id !== this.props.commentUpdate?._id)
+            this.realtimeCommentAdded()
 
     }
 
@@ -203,7 +206,6 @@ class FeedPost extends React.Component {
                         comments
                     })
                     clearValues()
-
                     // this.props.setResponsePreview("success", "Commented Successfully...")
                 }
 
@@ -264,7 +266,6 @@ class FeedPost extends React.Component {
 
     realtimePostLike = () => {
 
-
         this.setState(prevState => {
 
             let likes = [...prevState.likes];
@@ -299,7 +300,7 @@ class FeedPost extends React.Component {
         this.setState(prevState => {
 
             let shares = [...prevState.shares]
-            shares = prevState.shares.filter(item => item._id !== this.props.post.realtimeShare._id);
+            shares.splice(0, 0, this.props.post.realtimeShare)
 
             return {
                 shares: shares,
@@ -308,10 +309,59 @@ class FeedPost extends React.Component {
         })
     }
 
+    realtimeCommentUpdate = () => {
+        let data = this.props.commentLikeUpdate;
+
+        if (this.props.post._id !== data.postID) return;
+
+
+        let comments = [...this.state.comments];
+
+        let commentIndex = comments.findIndex(item => item._id === data.commentID);
+
+        if (commentIndex < 0) return
+
+        let commentToUpdate = {...comments[commentIndex]}
+        let commentLikes = {...commentToUpdate.likes}
+        let commentLikesBy = [...commentLikes.by]
+
+
+        if (data.isLiked) {
+            commentLikes.count += 1
+            commentLikesBy.splice(0, 0, data.commentUpdateBy);
+        } else {
+            commentLikes.count -= 1
+            commentLikesBy = commentLikesBy.filter(item => item !== data.commentUpdateBy);
+        }
+
+        commentToUpdate.likes = {...commentLikes, by: [...commentLikesBy]}
+        comments[commentIndex] = commentToUpdate;
+
+        this.setState({
+            comments
+        })
+
+    }
+
+
+    realtimeCommentAdded = () => {
+        let data = this.props.commentUpdate;
+        if (this.props.post._id !== data.postID) return;
+
+        let comments = [...this.state.comments];
+        comments.splice(0,0,data)
+        this.setState({
+            comments
+        })
+    }
+
 
     render() {
 
+
         let post = this.props.post;
+
+        // console.log(post)
 
         return (
             <>

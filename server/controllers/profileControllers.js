@@ -250,6 +250,7 @@ exports.addBio = async (req, res, next) => {
 
 
 exports.sendFriendReq = async (req, res, next) => {
+
     const validation = validationResult(req)
     if (!validation.isEmpty()) {
         let errors = validation.array();
@@ -300,13 +301,15 @@ exports.sendFriendReq = async (req, res, next) => {
         select: "firstName lastName profilePicture isOnline"
     }).execPopulate();
 
-    let io = getIO();
-    io.in(otherUserId.toString()).emit('req', notification)
 
 
     res.status(200).json({
         "message": "success",
     });
+
+
+    let io = getIO();
+    io.in(otherUserId.toString()).emit('req', {notification})
 
 
 }
@@ -364,17 +367,22 @@ exports.cancelFriendReq = async (req, res, next) => {
     await otherUser.save();
     await myUser.save()
 
+
+
     res.status(200).json({
         "message": "success",
     });
 
+
+    let io = getIO();
+    io.in(otherUserId.toString()).emit('reqCancel', {notification:notifi})
 
 }
 
 
 exports.acceptFriendReq = async (req, res, next) => {
 
-    //TODO: add notification to the user whom request is accepted
+    //TODO: add notification to the user whose request is accepted
 
 
     const validation = validationResult(req)
@@ -430,10 +438,13 @@ exports.acceptFriendReq = async (req, res, next) => {
     await myUser.save()
 
 
+
     res.status(200).json({
         "message": "success",
     });
 
+    let io = getIO();
+    io.in(otherUserId.toString()).emit('reqAccepted', {notification:notifi})
 
 }
 
@@ -501,6 +512,8 @@ exports.declineFriendReq = async (req, res, next) => {
         "isDeclined": true
     });
 
+    let io = getIO();
+    io.in(otherUserId.toString()).emit('reqDeclined', {notification:notifi})
 
 }
 
@@ -549,6 +562,9 @@ exports.unfriend = async (req, res, next) => {
         "unfriend": true
     });
 
+
+    let io = getIO();
+    io.in(userToUnfriend).emit('unfriend', {notification:{}})
 
 }
 

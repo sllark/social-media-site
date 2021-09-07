@@ -25,7 +25,10 @@ class Feed extends React.Component {
             user: {
                 firstName: ".",
                 lastName: "."
-            }
+            },
+            commentLikeUpdate: null,
+            commentAdded: null,
+
         }
 
         this.scrollEvent = null;
@@ -99,54 +102,46 @@ class Feed extends React.Component {
         window.removeEventListener('scroll', this.loadMore);
     }
 
-    updatePostRealtime = (notification) => {
+    updatePostRealtime = (data) => {
 
-
-        if (notification.notificationType === "like") {
-            this.postLikeEvent(notification);
-        }
-
-
-        // notificationType
-        // notificationPostID
+        if (data.eventType === "postLiked")
+            this.postLikeEvent(data, true);
+        if (data.eventType === "postUnliked")
+            this.postLikeEvent(data, false);
+        else if (data.eventType === "commentLiked")
+            this.setState({commentLikeUpdate: {...data, isLiked: true}})
+        else if (data.eventType === "commentUnliked")
+            this.setState({commentLikeUpdate: {...data, isLiked: false}})
+        else if (data.eventType === "postComment")
+            this.setState({commentAdded: data.comment})
 
 
     }
 
-    postLikeEvent = (data) => {
+    postLikeEvent = (data, isLiked) => {
 
         let posts = [...this.state.posts];
-        let postIndex = posts.findIndex(item => item._id === data.notificationPostID);
+        let postIndex = posts.findIndex(item => item._id === data.postID);
 
         if (postIndex < 0) return;
 
         let postToUpdate = {...posts[postIndex]}
         let likes = {...postToUpdate.likes}
-        let likesBy = [...likes.by]
 
-        if (data.person._id) { // post liked
 
-            postToUpdate.realtimeLike = data.person
+        if (isLiked) {
+            postToUpdate.realtimeLike = data.personData
             likes.count += 1
-            likesBy.splice(0,0,data.person._id);
-
-            this.setResponsePreview("message",data.content);
-
-        }
-        else { //like removed
-            postToUpdate.realtimeUnlike = data.person
+        } else {
+            postToUpdate.realtimeUnlike = data.personData
             likes.count -= 1
-            likesBy = likesBy.filter(item => item !== data.person);
         }
 
-
-        postToUpdate.likes = {...likes, by: [...likesBy]};
+        postToUpdate.likes = {...likes}
         posts[postIndex] = postToUpdate;
 
         this.setState({posts})
     }
-
-
 
 
     getMyUser = () => {
@@ -301,8 +296,15 @@ class Feed extends React.Component {
                                 <FeedPost
                                     key={post._id}
                                     post={post}
+                                    myUser={this.state.user}
                                     removePost={this.removePost}
                                     setResponsePreview={this.setResponsePreview}
+                                    commentLikeUpdate={
+                                        this.state.commentLikeUpdate?.postID === post._id ? this.state.commentLikeUpdate : null
+                                    }
+                                    commentUpdate={
+                                        this.state.commentAdded?.postID === post._id ? this.state.commentAdded : null
+                                    }
                                 />)
                         }
                         {

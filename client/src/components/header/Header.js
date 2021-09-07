@@ -16,6 +16,8 @@ import handleAxiosError from "../../helper/handleAxiosError";
 
 
 function Header(props) {
+    //TODO: lazy-load notifications
+
 
     const [queryValue, changeQueryValue] = useState("");
     const [isFocused, changeFocused] = useState(false);
@@ -46,16 +48,20 @@ function Header(props) {
 
         if (props.notification) {
 
+            if (!props.notification.notification._id) return;
+
             let prevNoti = [...notifications]
 
-            let filtered = prevNoti.filter(noti => noti._id !== props.notification._id)
+            let filtered = prevNoti.filter(noti => noti._id !== props.notification.notification._id)
 
             if (filtered.length === prevNoti.length) {
-                setNotifications([props.notification, ...notifications])
+                setNotifications([props.notification.notification, ...notifications])
+                console.log('in 1')
 
-                let type = props.notification.notificationType;
-                if (type === "share" || type === "req") {
-                    setResponsePreview("message", props.notification.content)
+                let type = props.notification.eventType;
+                if (type === "postShared" || type === "req") {
+                    console.log('in')
+                    setResponsePreview("message", props.notification.notification.content)
                 }
 
             } else if (filtered.length < prevNoti.length)
@@ -190,6 +196,7 @@ function Header(props) {
                                         setResponsePreview={setResponsePreview}
                                         showPopup={setNotifiPopup}
                                         hideItem={hideItem}
+                                        setRequestStatus={props.setRequestStatus}
                                     />
                                     : null
 

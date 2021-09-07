@@ -18,6 +18,10 @@ const Notification = new Schema({
         type: String,
         required: true
     },
+    commentID:{ // comment is liked then save commentID here
+        type: Schema.Types.ObjectId,
+        ref: 'CommentBy',
+    },
     date: {
         type: Schema.Types.Date,
         required: true
