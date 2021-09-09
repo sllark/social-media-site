@@ -525,7 +525,7 @@ class FeedPost extends React.Component {
                         (!this.state.showComments ? " hideComments" : "")
                     }>
 
-                        <TextEditor post={this.postComment} profile={post.user} placeholder="Write a comment..."/>
+                        <TextEditor post={this.postComment} profile={this.props.myUser} placeholder="Write a comment..."/>
 
 
                         {

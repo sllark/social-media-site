@@ -25,16 +25,18 @@ function Header(props) {
     const [redirect, changeRedirect] = useState(null);
     const [notifiPopup, setNotifiPopup] = useState(false);
 
-    const [notifications, setNotifications,notificationsRef] = useState([]);
+    const [notifications, setNotifications, notificationsRef] = useState([]);
     const [totalNotifications, setTotalNotifications] = useState(0);
     const [loadingNotifications, setLoadingNotifications] = useState(false);
 
     const [responseStatus, setResponseStatus] = useState("");
     const [responseMsg, setResponseMsg] = useState("");
 
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
 
     const wrapperRef = useRef(null);
     const notificationPopupRef = useRef(null);
+
 
     useEffect(() => {
         document.addEventListener('keyup', searchOnEnter)
@@ -49,41 +51,53 @@ function Header(props) {
 
     }, [])
 
-
     useEffect(() => {
 
         if (props.notification) {
 
-            if (!props.notification.notification._id) return;
+            if (!props.notification?.notification?._id) return;
 
             let prevNoti = [...notifications]
 
             let filtered = prevNoti.filter(noti => noti._id !== props.notification.notification._id)
 
             if (filtered.length === prevNoti.length) {
-                setNotifications([props.notification.notification, ...notifications])
+                let newNotification = {...props.notification.notification};
+
+                if (props.notification.personData?._id) {
+                    newNotification.person = props.notification.personData;
+                }
+
+                setNotifications([newNotification, ...notifications])
                 setTotalNotifications(totalNotifications + 1)
 
                 let type = props.notification.eventType;
                 if (type === "postShared" || type === "req") {
                     setResponsePreview("message", props.notification.notification.content)
                 }
+                setUnread([props.notification.notification])
 
             } else if (filtered.length < prevNoti.length) {
                 setNotifications(filtered)
-                setTotalNotifications(totalNotifications + 1)
+                setTotalNotifications(totalNotifications - (prevNoti.length - filtered.length))
+                setUnreadNotifications(prev => prev - 1)
             }
+
 
         }
 
     }, [props.notification])
 
-
     useEffect(() => {
 
         if (notifiPopup) {
+
             notificationPopupRef.current.addEventListener('scroll', scrollModal)
             //event removed automatically when element is removed
+            if (unreadNotifications)
+                setRead(notificationsRef.current)
+
+
         } else {
             setLoadingNotifications(false)
         }
@@ -131,7 +145,14 @@ function Header(props) {
                 }
             })
             .then(result => {
+
+                if (notifications.length) {
+                    setRead(notificationsRef.current)
+                }
+
                 setNotifications(prevNoti => ([...prevNoti, ...result.data.notifications]))
+
+
             })
             .catch(error => {
                 handleAxiosError(error, setResponsePreview, "Notifications Loading Failed...")
@@ -142,6 +163,29 @@ function Header(props) {
 
     }
 
+    const setUnread = (notifications) => {
+
+        let unread = 0;
+        notifications.forEach(item => {
+            if (!item.isRead) unread++;
+        })
+        setUnreadNotifications(prevCount => prevCount + unread);
+    }
+
+    const setRead = (notifications) => {
+
+        let notificationsList = [...notifications];
+
+        notificationsList.forEach(item => {
+            item.isRead = true;
+        })
+
+        updateUnreadNotifications(notificationsList.length)
+
+        setNotifications(notificationsList);
+        setUnreadNotifications(0);
+    }
+
 
     const getTotalNotifications = () => {
 
@@ -149,6 +193,26 @@ function Header(props) {
             .get("/getTotalNotifications")
             .then(result => {
                 setTotalNotifications(result.data.total)
+                setUnreadNotifications(result.data.unread)
+            })
+            .catch(error => {
+                handleAxiosError(error, setResponsePreview, "Notifications Loading Failed...")
+            })
+
+    }
+
+
+    const updateUnreadNotifications = (loaded = 0) => {
+
+        axios
+            .get("/updateUnreadNotifications", {
+                params: {
+                    loaded: loaded
+                }
+            })
+            .then(result => {
+                // setTotalNotifications(result.data.total)
+                // setUnreadNotifications(result.data.unread)
             })
             .catch(error => {
                 handleAxiosError(error, setResponsePreview, "Notifications Loading Failed...")
@@ -242,6 +306,14 @@ function Header(props) {
 
 
                         <div className="header__controls__container" ref={wrapperRef}>
+
+                            {
+                                unreadNotifications > 0 ?
+                                    <div className="addUnread">
+                                        <span>{unreadNotifications < 100 ? unreadNotifications : "99+"}</span>
+                                    </div>
+                                    : null
+                            }
 
                             <NotificationIcon onClick={() => setNotifiPopup(!notifiPopup)}/>
 

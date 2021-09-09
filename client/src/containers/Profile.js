@@ -24,7 +24,13 @@ class Profile extends React.Component {
             shouldRedirect: false,
             user: {
                 firstName: ".",
-                lastName: "."
+                lastName: ".",
+                isOnline:false
+            },
+            myUser: {
+                firstName: ".",
+                lastName: ".",
+                isOnline:false
             },
             responseMsg: "",
             responseStatus: "",
@@ -105,7 +111,8 @@ class Profile extends React.Component {
     componentDidMount() {
 
         if (this.props.match.params.id) {
-            this.getUser();
+            this.getUser(localStorage.getItem('userID'),'myUser');
+            this.getUser(this.props.match.params.id,'user');
             this.scrollEvent = window.addEventListener('scroll', this.loadMore);
             this.loadPosts()
         } else {
@@ -198,8 +205,7 @@ class Profile extends React.Component {
         this.setState({user})
     }
 
-    getUser = () => {
-        let id = this.props.match.params.id;
+    getUser = (id,userType) => {
 
         axios.get(
             "/getUser",
@@ -210,10 +216,8 @@ class Profile extends React.Component {
             })
             .then(result => {
 
-                console.log(result.data.user);
-
                 this.setState({
-                    user: result.data.user
+                    [userType]: result.data.user
                 })
 
             })
@@ -225,6 +229,8 @@ class Profile extends React.Component {
 
 
     }
+
+
 
     loadPosts = () => {
 
@@ -386,6 +392,7 @@ class Profile extends React.Component {
                                                 key={post._id}
                                                 post={post}
                                                 removePost={this.removePost}
+                                                myUser={this.state.myUser}
                                                 setResponsePreview={this.setResponsePreview}
                                                 commentLikeUpdate={
                                                     this.state.commentLikeUpdate?.postID === post._id ? this.state.commentLikeUpdate : null

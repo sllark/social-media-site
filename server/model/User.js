@@ -62,11 +62,21 @@ const User = new Schema({
             type: Schema.Types.ObjectId,
             ref: 'Notification'
         }
+    ],
+    conersationWith:[ // list of users whom with I have conversation, list would be sorted according to latest conversations
+        {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        }
     ]
 
 })
 
 User.index({firstName: 'text', lastName: 'text'});
+
+
+
+
 
 
 User.statics = {

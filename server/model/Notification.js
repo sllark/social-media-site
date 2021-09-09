@@ -1,7 +1,11 @@
 const {model, Schema} = require('mongoose')
 
 const Notification = new Schema({
-    person: { //user who made a notification event
+    userID:{ // user to whom notification should be shown, notification receiver
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+    },
+    person: { //user who made a notification event, notification sender
         type: Schema.Types.ObjectId,
         ref: 'User',
     },
@@ -29,6 +33,10 @@ const Notification = new Schema({
     notificationPostID: {  // where notification link will take you on front end
         type: String,
     },
+    isRead:{
+        type: Boolean,
+        default:false
+    }
 
 })
 

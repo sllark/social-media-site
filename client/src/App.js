@@ -235,6 +235,7 @@ class App extends React.Component {
                                           usersOnline={this.state.usersOnline}
                                           usersOffline={this.state.usersOffline}
                                           removeUser={this.removeUser}
+                                          chatSidebar={true}
                                       >
                                           <Messanger key={props.match.params.id}  {...props} socket={this.socket}/>
                                       </Layout>

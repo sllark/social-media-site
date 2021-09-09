@@ -159,6 +159,31 @@
 
   }
 
+
+  .addUnread{
+
+    position: absolute;
+    right: -1rem;
+    top: -0.3rem;
+    width: 2rem;
+    height: 2rem;
+    background-color: red;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 100%;
+    color: white;
+    z-index: -1;
+    font-size: 0.8rem;
+
+
+    p{
+      line-height: 1;
+    }
+
+
+  }
+
 }
 
 

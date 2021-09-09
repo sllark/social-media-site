@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import Header from "../header/Header";
 import Sidebar from "../general/Sidebar";
+import SidebarChats from "../general/SidebarChats";
 import SidebarOnline from "../general/SidebarOnline";
 
 function Layout(props) {
@@ -12,7 +13,7 @@ function Layout(props) {
 
     const [socket, setSocket] = useState(null);
     const [notifi, setNotifi] = useState(null);
-    const [requestStatus, setRequestStatus] = useState(null);
+    const [friendRequestStatus, setFriendRequestStatus] = useState(null); // friend request status
 
     useEffect(() => {
         setOnlineUser(props.usersOnline[0]);
@@ -27,7 +28,6 @@ function Layout(props) {
             setSocket(props.socket)
             addSocketEvents();
         }
-
     }, [props.socket])
 
 
@@ -44,7 +44,6 @@ function Layout(props) {
         props.socket.on('reqAccepted', (data) => newNotification(data, 'reqAccepted'))
         props.socket.on('reqDeclined', (data) => newNotification(data, 'reqDeclined'))
         props.socket.on('unfriend', (data) => newNotification(data, 'unfriend'))
-
 
     }
 
@@ -65,19 +64,29 @@ function Layout(props) {
                     menuRightOpen={menuRightOpen}
                     setMenuRightOpen={setMenuRightOpen}
                     notification={notifi}
-                    setRequestStatus={setRequestStatus}
+                    setRequestStatus={setFriendRequestStatus}
             />
-            <Sidebar history={props.history}
-                     isVisible={menuLeftOpen}
-                     showMenu={setMenuLeftOpen}
-            />
+
+
+            {
+                props.chatSidebar ?
+                    <SidebarChats history={props.history}
+                                  isVisible={menuLeftOpen}
+                                  showMenu={setMenuLeftOpen}
+                    /> :
+                    <Sidebar history={props.history}
+                             isVisible={menuLeftOpen}
+                             showMenu={setMenuLeftOpen}
+                    />
+            }
+
 
             {
                 React.cloneElement(props.children, {
                     onlineUser: onlineUser,
                     offlineUser: offlineUser,
                     notification: notifi,
-                    requestStatus: requestStatus
+                    requestStatus: friendRequestStatus
                 })
             }
 
@@ -95,6 +104,7 @@ function Layout(props) {
     );
 
 }
+
 
 
 export default Layout;

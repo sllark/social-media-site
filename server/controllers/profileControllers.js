@@ -283,6 +283,7 @@ exports.sendFriendReq = async (req, res, next) => {
 
 
     let notification = new Notification({
+        userID: otherUserId,
         person: req.user.userID,
         notificationType: 'req',
         content: `${myUser.firstName} ${myUser.lastName} sent your a friend request.`,
@@ -572,6 +573,9 @@ exports.getNotifications = async (req, res, next) => {
     let max = 12,
         skip = Number(req.query.loaded) || 0;
 
+    // await Notification.updateMany({},{"$set":{"isRead":false}},{ multi: true })
+    // await Notification.deleteMany({})
+
 
     let user = await User.findById(userID)
         .select('notifications')
@@ -590,7 +594,10 @@ exports.getNotifications = async (req, res, next) => {
             }
         })
 
-    console.log(user)
+
+    // user.notifications=[];
+    // await user.save();
+
 
     res.status(200).json({
         "message": "success",
@@ -607,12 +614,51 @@ exports.getTotalNotifications = async (req, res, next) => {
         .match({_id: mongoose.Types.ObjectId(userID)})
         .project({notifications: {$size: '$notifications'}})
 
-
     let total = notifications[0].notifications;
+
+
+    let unread = await Notification.find({
+        userID: userID,
+        isRead: false
+    }).count();
+
+
+    // let notifications = await User.findById('userID').select('notifications');
+    // let total = notifications.length;
+
 
     res.status(200).json({
         "message": "success",
-        total: total || 0
+        total: total || 0,
+        unread: unread
+    });
+}
+
+
+exports.updateUnreadNotifications = async (req, res, next) => {
+
+    let userID = req.user.userID,
+        max = req.query.loaded;
+
+
+
+    await Notification.updateMany(
+        {
+            userID: userID,
+        },
+        {
+            "$set": {"isRead": true}
+        },
+        {
+            multi: true,
+            sort: {_id: -1},
+            limit: max
+        }
+    )
+
+
+    res.status(200).json({
+        "message": "success"
     });
 }
 
@@ -697,6 +743,45 @@ exports.getFriendsCount = async (req, res, next) => {
     res.status(200).json({
         "message": "success",
         friendsCount: userFiends.friends.length
+    });
+
+}
+
+
+exports.getChats = async (req, res, next) => {
+    const validation = validationResult(req)
+    if (!validation.isEmpty()) {
+        let errors = validation.array()
+        const error = new Error(errors[0].msg);
+        error.statusCode = 422;
+        error.errors = errors;
+        return next(error);
+    }
+
+    let userID = req.user.userID,
+        loaded = req.query.loaded || 0,
+        max=20;
+
+
+    let userChats = await User.findById(userID).select("conersationWith")
+
+
+    userChats = await userChats.populate({
+        path: 'conersationWith',
+        model: 'User',
+        options: {
+            sort: {_id: -1},
+            skip: Number(loaded),
+            limit: max
+        },
+        select: "firstName lastName profilePicture isOnline"
+    }).execPopulate()
+
+
+
+    res.status(200).json({
+        "message": "success",
+        chats: userChats.conersationWith
     });
 
 }

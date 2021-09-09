@@ -265,6 +265,7 @@ exports.likePost = async (req, res, next) => {
     myUser = await User.findById(userID).select('firstName lastName')
 
     let notification = new Notification({
+        userID: postAuthor._id,
         person: req.user.userID,
         notificationType: 'like',
         content: `${myUser.firstName} ${myUser.lastName} Liked your post.`,
@@ -344,6 +345,7 @@ exports.sharePost = async (req, res, next) => {
 
 
     let notification = new Notification({
+        userID: postAuthor._id,
         person: userID,
         notificationType: 'share',
         content: `${user.firstName} ${user.lastName} shared your post.`,
@@ -449,6 +451,7 @@ exports.commentPost = async (req, res, next) => {
     myUser = await User.findById(userID).select('firstName lastName')
 
     let notification = new Notification({
+        userID: postAuthor._id,
         person: userID,
         notificationType: 'comment',
         content: `${myUser.firstName} ${myUser.lastName} commented on your post.`,
@@ -579,6 +582,7 @@ exports.likeComment = async (req, res, next) => {
     myUser = await User.findById(userID).select('firstName lastName')
 
     let notification = new Notification({
+        userID: commentAuthor._id,
         person: userID,
         notificationType: 'commentLike',
         content: `${myUser.firstName} ${myUser.lastName} Liked your comment.`,

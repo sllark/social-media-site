@@ -22,8 +22,19 @@ class Feed extends React.Component {
             responseStatus: "",
             commentLikeUpdate:null,
             commentAdded: null,
+            myUser: {
+                firstName: ".",
+                lastName: "."
+            },
         }
 
+    }
+
+
+
+    componentDidMount() {
+        this.getPost()
+        this.getUser(localStorage.getItem('userID'),'myUser');
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
@@ -72,12 +83,8 @@ class Feed extends React.Component {
 
     }
 
-    componentDidMount() {
-        this.getMyUser()
-    }
 
-
-    getMyUser = () => {
+    getPost = () => {
 
         axios.get(
             "/getSinglePosts",
@@ -95,6 +102,31 @@ class Feed extends React.Component {
             })
             .catch(error => {
                 handleAxiosError(error, this.setResponsePreview, "Loading Failed...")
+            })
+
+
+    }
+
+    getUser = (id,userType) => {
+
+        axios.get(
+            "/getUser",
+            {
+                params: {
+                    profileID: id,
+                }
+            })
+            .then(result => {
+
+                this.setState({
+                    [userType]: result.data.user
+                })
+
+            })
+            .catch(error => {
+
+                handleAxiosError(error, this.setResponsePreview, "Loading Failed...")
+
             })
 
 
@@ -176,6 +208,7 @@ class Feed extends React.Component {
                                     key={this.state.post._id}
                                     post={this.state.post}
                                     removePost={this.removePost}
+                                    myUser={this.state.myUser}
                                     setResponsePreview={this.setResponsePreview}
                                     commentLikeUpdate={
                                         this.state.commentLikeUpdate?.postID === this.state.post._id ? this.state.commentLikeUpdate : null

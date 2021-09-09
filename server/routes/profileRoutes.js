@@ -43,11 +43,15 @@ router.get('/getNotifications', isAuth, asyncHandler(profileControllers.getNotif
 
 router.get('/getTotalNotifications', isAuth, asyncHandler(profileControllers.getTotalNotifications))
 
+router.get('/updateUnreadNotifications', isAuth, asyncHandler(profileControllers.updateUnreadNotifications))
+
 router.get('/getOnlineFriends', isAuth, asyncHandler(profileControllers.getOnlineFriends))
 
 router.get('/getFriends', isAuth, validateObjectID("profileID"), asyncHandler(profileControllers.getFriends))
 
 router.get('/getFriendsCount', isAuth, validateObjectID("profileID"), asyncHandler(profileControllers.getFriendsCount))
+
+router.get('/getChats', isAuth, asyncHandler(profileControllers.getChats))
 
 
 module.exports = router;

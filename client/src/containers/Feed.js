@@ -22,7 +22,7 @@ class Feed extends React.Component {
             isLoading: false,
             responseMsg: "",
             responseStatus: "",
-            user: {
+            myUser: {
                 firstName: ".",
                 lastName: "."
             },
@@ -33,6 +33,12 @@ class Feed extends React.Component {
 
         this.scrollEvent = null;
 
+    }
+    componentDidMount() {
+        this.scrollEvent = window.addEventListener('scroll', this.loadMore);
+        this.getFeedPostsCount()
+        this.loadFeedPosts()
+        this.getUser(localStorage.getItem('userID'),'myUser');
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
@@ -91,13 +97,6 @@ class Feed extends React.Component {
 
     }
 
-    componentDidMount() {
-        this.scrollEvent = window.addEventListener('scroll', this.loadMore);
-        this.getFeedPostsCount()
-        this.loadFeedPosts()
-        this.getMyUser()
-    }
-
     componentWillUnmount() {
         window.removeEventListener('scroll', this.loadMore);
     }
@@ -144,8 +143,7 @@ class Feed extends React.Component {
     }
 
 
-    getMyUser = () => {
-        let id = localStorage.getItem('userID');
+    getUser = (id,userType) => {
 
         axios.get(
             "/getUser",
@@ -157,17 +155,20 @@ class Feed extends React.Component {
             .then(result => {
 
                 this.setState({
-                    user: result.data.user
+                    [userType]: result.data.user
                 })
 
             })
             .catch(error => {
+
                 handleAxiosError(error, this.setResponsePreview, "Loading Failed...")
+
             })
 
 
     }
 
+    
     loadMore = (e) => {
 
         if (
@@ -288,7 +289,7 @@ class Feed extends React.Component {
                             placeholder={"write something..."}
                             addNewPost={this.addNewPost}
                             setResponsePreview={this.setResponsePreview}
-                            user={this.state.user}
+                            user={this.state.myUser}
                         />
 
                         {
@@ -296,7 +297,7 @@ class Feed extends React.Component {
                                 <FeedPost
                                     key={post._id}
                                     post={post}
-                                    myUser={this.state.user}
+                                    myUser={this.state.myUser}
                                     removePost={this.removePost}
                                     setResponsePreview={this.setResponsePreview}
                                     commentLikeUpdate={

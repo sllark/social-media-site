@@ -46,6 +46,7 @@ const initiate = (server) => {
 
         socket.on('chat message', async (msg) => {
             let chatID = getChatId(msg.to, msg.from);
+            socket.in(msg.to).emit('new chat message', msg);
 
             let newMsg = new Message({
                 chatID: chatID,
@@ -57,7 +58,19 @@ const initiate = (server) => {
 
             await newMsg.save()
 
-            socket.in(msg.to).emit('new chat message', msg);
+            let userTo = await User.findById(msg.to).select("conersationWith");
+            userTo.conersationWith = userTo.conersationWith.filter(item => item.toString() !== msg.from.toString());
+            console.log(userTo.conersationWith)
+            userTo.conersationWith.splice(0,0,msg.from);
+            await userTo.save()
+
+            let userFrom = await User.findById(msg.from).select("conersationWith");
+            userFrom.conersationWith = userFrom.conersationWith.filter(item => item.toString() !== msg.to.toString());
+            console.log(userFrom.conersationWith)
+            userFrom.conersationWith.splice(0,0,msg.to);
+            await userFrom.save()
+
+
         })
 
         socket.on('typingStart', async (data) => {
@@ -84,13 +97,13 @@ const initiate = (server) => {
                 notifyFriends('userOffline', socket.userID);
 
 
-                let userFetchedPosts = await smembersAsync(socket.userID+"-posts");
+                let userFetchedPosts = await smembersAsync(socket.userID + "-posts");
 
                 // removing user data from redis
-                userFetchedPosts.forEach(item=>{
+                userFetchedPosts.forEach(item => {
                     redisClient.srem(item.toString(), socket.userID.toString());
                 })
-                redisClient.del(socket.userID+"-posts");
+                redisClient.del(socket.userID + "-posts");
 
             }
         });
