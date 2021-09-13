@@ -2,9 +2,10 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "start": "nodemon --inspect --trace-warnings app.js && live-server"
+    "start": "node app.js",
+    "dev-start": "nodemon --inspect --trace-warnings app.js"
   },
   "keywords": [],
   "author": "",

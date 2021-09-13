@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const User = require('../model/User');
+const {JWT_SECRET} = require('../config/keys')
 
 
 exports.signup = async (req, res, next) => {
@@ -38,7 +39,7 @@ exports.signup = async (req, res, next) => {
     }
 
 
-    jwt.sign(payload, process.env.JWT_SECRET, (error, token) => {
+    jwt.sign(payload, JWT_SECRET, (error, token) => {
         if (error) throw new Error('internal Error');
 
         res.status(200)
@@ -87,7 +88,7 @@ exports.login = async (req, res, next) => {
     }
 
 
-    jwt.sign(payload, process.env.JWT_SECRET, (error, token) => {
+    jwt.sign(payload, JWT_SECRET, (error, token) => {
         if (error) return next(new Error('Internal Server Error'));
 
         res.status(200)

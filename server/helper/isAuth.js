@@ -1,4 +1,6 @@
 const jwt = require('jsonwebtoken')
+const {JWT_SECRET} = require('../config/keys')
+
 
 const isAuth = (req, res, next) => {
 
@@ -12,7 +14,7 @@ const isAuth = (req, res, next) => {
 
     let decode;
     try {
-        decode = jwt.verify(authHeader, process.env.JWT_SECRET)
+        decode = jwt.verify(authHeader, JWT_SECRET)
     } catch (error) {
         error.message = 'Not Authorized';
         error.statusCode = 401;
@@ -32,7 +34,7 @@ const verifyToken = (token) => {
 
 
     try {
-        decode = jwt.verify(token, process.env.JWT_SECRET)
+        decode = jwt.verify(token, JWT_SECRET)
         return decode
     } catch (error) {
         return false;

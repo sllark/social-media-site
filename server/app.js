@@ -1,4 +1,3 @@
-require('dotenv').config()
 const path = require('path');
 const express = require('express');
 const mongoose = require('mongoose');
@@ -12,9 +11,10 @@ const postRoutes = require('./routes/postRoutes')
 const profileRoutes = require('./routes/profileRoutes')
 const messageRoutes = require('./routes/messageRoutes')
 
+const {MOGOURI} = require('./config/keys')
 
 
-const MONGOURI = 'mongodb://127.0.0.1:27017/focial?gssapiServiceName=mongodb';
+const MONGOURI = MOGOURI;
 const app = express();
 
 
