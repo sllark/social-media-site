@@ -1,7 +1,14 @@
 const redis = require('redis');
 const {promisify} = require('util');
 
-const client = redis.createClient();
+let client;
+
+if (process.env.REDIS_URL){
+    client= redis.createClient({url : process.env.REDIS_URL});
+}else
+    client= redis.createClient();
+
+
 
 client.flushall();
 
