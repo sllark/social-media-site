@@ -2,8 +2,6 @@ import React from "react";
 
 
 import FillScreen from "../components/FillScreen";
-import Sidebar from "../components/general/Sidebar";
-import SidebarOnline from "../components/general/SidebarOnline";
 import Message from "../components/messanger/Message";
 import TextEditor from "../components/general/TextEditor";
 
@@ -33,7 +31,7 @@ class Messanger extends React.Component {
             myProfile: {},
             otherUserProfile: {},
             responseMsg: "",
-            responseStatus: ""
+            responseStatus: "",
         }
 
         this.socket = undefined;
@@ -41,6 +39,26 @@ class Messanger extends React.Component {
         this._isMounted = false;
         this.prevScrollHeight = 0;
         this.typingTimeout = undefined
+    }
+
+    async componentDidMount() {
+        document.documentElement.style.overflowY = "unset";
+        this._isMounted = true
+
+        this.scrollEvent = this.messangerBodyRef.current.querySelector('.messanger__messagesCont').addEventListener('scroll', this.msgContScroll);
+
+        this.getMessagesCount()
+        this.getOldMessages();
+
+        if (this.props.socket) this.addSocketEvents();
+
+
+        let myID = await this.getProfileDetails(localStorage.getItem("userID"))
+        this.setState({myProfile: myID})
+        let otherID = await this.getProfileDetails(this.props.match.params.id)
+        this.setState({otherUserProfile: otherID})
+
+
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
@@ -71,37 +89,22 @@ class Messanger extends React.Component {
         this.prevScrollHeight = this.messangerBodyRef.current.querySelector('.messanger__messagesCont').scrollHeight;
     }
 
-    async componentDidMount() {
-        document.documentElement.style.overflowY = "unset";
-
-        this._isMounted = true
-        this.scrollEvent = this.messangerBodyRef.current.querySelector('.messanger__messagesCont').addEventListener('scroll', this.msgContScroll);
-
-        this.getMessagesCount()
-        this.getOldMessages();
-
-        if (this.props.socket) this.addSocketEvents();
-
-        console.log(this.props.socket);
-
-        let myID = await this.getProfileDetails(localStorage.getItem("userID"))
-        this.setState({myProfile: myID})
-        let otherID = await this.getProfileDetails(this.props.match.params.id)
-        this.setState({otherUserProfile: otherID})
-
-
-    }
-
     componentWillUnmount() {
         document.documentElement.style.overflowY = "scroll";
+        this.removeSocketEvents();
 
         this.messangerBodyRef.current.querySelector('.messanger__messagesCont').removeEventListener('scroll', this.msgContScroll)
     }
 
+
     addSocketEvents = () => {
         this.props.socket.on('new chat message', (msg) => {
-            if (this.props.match.params.id === msg.from)
+            this.props.addNewMessage(msg);
+
+            if (this.props.match.params.id === msg.from) {
                 this.addNewMsg({value: msg.value});
+            }
+
         })
 
         this.props.socket.on('notifyTypingStart', (msg) => {
@@ -112,10 +115,14 @@ class Messanger extends React.Component {
         })
     }
 
+    removeSocketEvents = () => {
+        this.props.socket.off('new chat message')
+        this.props.socket.off('notifyTypingStart')
+        this.props.socket.off('notifyTypingStop')
+    }
+
     getProfileDetails = (profileID) => {
-
         if (profileID === "") return;
-
 
         return axios.get(
             "/getProfileDetails",
@@ -223,6 +230,7 @@ class Messanger extends React.Component {
 
         if (this.props.socket) this.props.socket.emit('chat message', msgObj);
         this.addNewMsg({value}, true);
+        this.props.addNewMessage(msgObj);
         clearValue();
     }
 
@@ -333,6 +341,9 @@ class Messanger extends React.Component {
 
 
     render() {
+
+
+
 
         return (
             <FillScreen class="bg-light">

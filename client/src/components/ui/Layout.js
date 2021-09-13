@@ -3,6 +3,8 @@ import Header from "../header/Header";
 import Sidebar from "../general/Sidebar";
 import SidebarChats from "../general/SidebarChats";
 import SidebarOnline from "../general/SidebarOnline";
+import axios from "../../helper/axios";
+import handleAxiosError from "../../helper/handleAxiosError";
 
 function Layout(props) {
     const [menuLeftOpen, setMenuLeftOpen] = useState(false);
@@ -14,6 +16,14 @@ function Layout(props) {
     const [socket, setSocket] = useState(null);
     const [notifi, setNotifi] = useState(null);
     const [friendRequestStatus, setFriendRequestStatus] = useState(null); // friend request status
+
+    const [newMsg, setNewMsg] = useState(null);
+    const [unreadMsgs, setUnreadMsgs] = useState(0);
+
+
+    useEffect(() => {
+        getUnReadMsgs()
+    }, [])
 
     useEffect(() => {
         setOnlineUser(props.usersOnline[0]);
@@ -30,6 +40,21 @@ function Layout(props) {
         }
     }, [props.socket])
 
+    const getUnReadMsgs = () => {
+
+        axios
+            .get("/getUnreadMessages")
+            .then(result => {
+
+                setUnreadMsgs(result.data.unread)
+
+            })
+            .catch(error => {
+                // handleAxiosError(error, setResponsePreview, "Notifications Loading Failed...")
+            })
+
+
+    }
 
     const addSocketEvents = () => {
 
@@ -45,6 +70,10 @@ function Layout(props) {
         props.socket.on('reqDeclined', (data) => newNotification(data, 'reqDeclined'))
         props.socket.on('unfriend', (data) => newNotification(data, 'unfriend'))
 
+        // props.socket.on('new chat message', (data) => {
+        //     console.log("mdg",data);
+        // })
+
     }
 
     const newNotification = (data, eventType) => {
@@ -55,6 +84,9 @@ function Layout(props) {
         setNotifi(data);
     }
 
+    const newMessage = (msg)=>{
+        setNewMsg(msg);
+    }
 
     return (
         <>
@@ -65,14 +97,16 @@ function Layout(props) {
                     setMenuRightOpen={setMenuRightOpen}
                     notification={notifi}
                     setRequestStatus={setFriendRequestStatus}
+                    unreadMsgs={unreadMsgs}
             />
 
 
             {
-                props.chatSidebar ?
-                    <SidebarChats history={props.history}
+                props.isMessanger ?
+                    <SidebarChats routerMatch={props.match}
                                   isVisible={menuLeftOpen}
                                   showMenu={setMenuLeftOpen}
+                                  newMessage={newMsg}
                     /> :
                     <Sidebar history={props.history}
                              isVisible={menuLeftOpen}
@@ -86,7 +120,8 @@ function Layout(props) {
                     onlineUser: onlineUser,
                     offlineUser: offlineUser,
                     notification: notifi,
-                    requestStatus: friendRequestStatus
+                    requestStatus: friendRequestStatus,
+                    addNewMessage: props.isMessanger ? newMessage : null,
                 })
             }
 

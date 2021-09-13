@@ -60,7 +60,6 @@ const initiate = (server) => {
 
             let userTo = await User.findById(msg.to).select("conersationWith");
             userTo.conersationWith = userTo.conersationWith.filter(item => item.toString() !== msg.from.toString());
-            console.log(userTo.conersationWith)
             userTo.conersationWith.splice(0,0,msg.from);
             await userTo.save()
 

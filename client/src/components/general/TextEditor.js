@@ -26,7 +26,7 @@ function TextEditor(props) {
 
 
             <Link to={"/profile/" + props.profile?._id || ""}>
-                <Avatar isActive={props.profile.isOnline || props.profile._id === localStorage.getItem("userID")}
+                <Avatar isActive={props.profile?.isOnline || props.profile._id === localStorage.getItem("userID")}
                         url={profilePic}/>
             </Link>
             <div className="textEditor__input d-flex">

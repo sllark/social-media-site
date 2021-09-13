@@ -43,19 +43,22 @@
     padding: 1.2rem 1.5rem;
     position: relative;
 
-
-    &:hover,
-    &:focus,
-    .active {
-      background-color: rgba($color-gray-200, 0.75);
-      cursor: pointer;
-      //box-shadow: 1px 5px 10px rgba(0,0,0,0.2);
-
-      text-decoration: none;
-
+    &.active {
+      background-color: white;
     }
 
-    a{
+    &:hover,
+    &:focus {
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    &:hover {
+      background-color: rgba($color-gray-200, 0.75);
+    }
+
+
+    a {
 
       &:focus {
         text-decoration: underline;
@@ -77,6 +80,40 @@
       margin-left: 1.5rem;
     }
 
+
+    &__content{
+
+      display: flex;
+      flex-flow: column;
+
+      span{
+        display: block;
+        margin-top: 0.3rem;
+        margin-left: 1.5rem;
+        font-size: 1.3rem;
+        color: $color-gray-600;
+      }
+
+    }
+
+
+    &__unRead{
+      position: absolute;
+      top: 50%;
+      right: 5%;
+      transform: translateY(-50%);
+      width: 2.3rem;
+      height: 2.3rem;
+      font-size: 1.15rem;
+      background-color: $color-primary-dark;
+      color: white;
+      border-radius: 100%;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+    }
 
   }
 
@@ -124,10 +161,17 @@
 
 }
 
+.sidebarChats {
+  .sidebar__container {
+    padding-top: 0;
+  }
+}
+
 
 .showSidebar {
   transform: translateX(0) !important;
 }
+
 
 .hideSidebarLG {
 
@@ -146,6 +190,10 @@
   }
 
 
+}
+
+.scrollbarVisible {
+  overflow: auto;
 }
 
 .scrollbarVisible::-webkit-scrollbar {

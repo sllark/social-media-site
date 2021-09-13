@@ -51,7 +51,5 @@ router.get('/getFriends', isAuth, validateObjectID("profileID"), asyncHandler(pr
 
 router.get('/getFriendsCount', isAuth, validateObjectID("profileID"), asyncHandler(profileControllers.getFriendsCount))
 
-router.get('/getChats', isAuth, asyncHandler(profileControllers.getChats))
-
 
 module.exports = router;

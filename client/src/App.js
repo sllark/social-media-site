@@ -227,6 +227,7 @@ class App extends React.Component {
                             </Layout>}
                     />
 
+
                     <PrivateRoute path="/messanger/:id"
                                   render={(props) =>
                                       <Layout
@@ -235,12 +236,16 @@ class App extends React.Component {
                                           usersOnline={this.state.usersOnline}
                                           usersOffline={this.state.usersOffline}
                                           removeUser={this.removeUser}
-                                          chatSidebar={true}
+                                          isMessanger={true}
                                       >
-                                          <Messanger key={props.match.params.id}  {...props} socket={this.socket}/>
+                                          <Messanger key={props.match.params.id}
+                                                     {...props}
+                                                     socket={this.socket}/>
                                       </Layout>
                                   }
                     />
+
+
                     <Route path="/">
                         <Login updateToken={this.updateToken}/>
                     </Route>

@@ -17,8 +17,6 @@ import handleAxiosError from "../../helper/handleAxiosError";
 
 
 function Header(props) {
-    //TODO: lazy-load notifications
-
 
     const [queryValue, changeQueryValue] = useState("");
     const [isFocused, changeFocused] = useState(false);
@@ -92,11 +90,10 @@ function Header(props) {
 
         if (notifiPopup) {
 
-            notificationPopupRef.current.addEventListener('scroll', scrollModal)
             //event removed automatically when element is removed
-            if (unreadNotifications)
-                setRead(notificationsRef.current)
+            notificationPopupRef.current.addEventListener('scroll', scrollPopup)
 
+            if (unreadNotifications) setRead(notificationsRef.current)
 
         } else {
             setLoadingNotifications(false)
@@ -110,7 +107,7 @@ function Header(props) {
         setNotifiPopup(false)
     });
 
-    let scrollModal = () => {
+    let scrollPopup = () => {
 
 
         let obj = notificationPopupRef.current;

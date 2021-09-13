@@ -19,7 +19,7 @@ const Message = new Schema({
         type: String,
         required: true
     },
-    isRead: {
+    w: {
         type: Boolean,
         default: false
     }
