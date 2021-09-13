@@ -6,7 +6,7 @@ import configs from "../../assets/config/configs";
 import profile from "../../assets/img/personAvatar.png";
 
 function truncateString(str, num) {
-    if (str.length > num) {
+    if (str?.length > num) {
         return str.slice(0, num) + "...";
     } else {
         return str;
