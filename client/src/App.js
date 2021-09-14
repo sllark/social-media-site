@@ -36,7 +36,7 @@ class App extends React.Component {
 
     componentDidMount() {
         this.socket = io.connect(configs.api_url,{
-            transports: ["polling", "websocket"]
+            transports: ["websocket"]
         })
 
         this.joinSocket(this.socket)
