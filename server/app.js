@@ -14,6 +14,7 @@ const messageRoutes = require('./routes/messageRoutes')
 const {MOGOURI} = require('./config/keys')
 
 
+const PORT = process.env.PORT || 3344;
 const MONGOURI = MOGOURI;
 const app = express();
 
@@ -84,7 +85,7 @@ mongoose.connect(MONGOURI,
     })
 
 
-console.log('connected! at post 3344')
-let server = app.listen(3344)
+console.log(`connected! at post ${PORT}`)
+let server = app.listen(PORT)
 
 getSocket.initiate(server);
