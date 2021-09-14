@@ -6,15 +6,16 @@ const getChatId = require('./getChatID')
 const Message = require('../model/Message');
 const User = require('../model/User');
 const {redisClient, llenAsync, smembersAsync} = require('./redis')
-
+const {FRONTEND_URL} = require('../config/keys')
 
 let io = null;
 
 const initiate = (server) => {
 
+    // "https://social-media-site-react.vercel.app/"
     io = new Server(server, {
         cors: {
-            origin: ["http://localhost:3000","https://social-media-site-react.vercel.app/"],
+            origin: FRONTEND_URL,
             methods: ["GET", "POST"]
         }
     });
