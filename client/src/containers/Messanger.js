@@ -1,13 +1,14 @@
 import React from "react";
 
-
 import FillScreen from "../components/FillScreen";
 import Message from "../components/messanger/Message";
 import TextEditor from "../components/general/TextEditor";
-
+import MessagerHeader from "../components/messanger/MessagerHeader";
 import Loading from "../components/ui/Loading";
-import axios from "../helper/axios";
 import ShowResponse from "../components/ui/ShowResponse";
+
+
+import axios from "../helper/axios";
 import handleAxiosError from "../helper/handleAxiosError";
 
 
@@ -29,7 +30,10 @@ class Messanger extends React.Component {
             datesCount: 0,
             otherUserTyping: false,
             myProfile: {},
-            otherUserProfile: {},
+            otherUserProfile: {
+                firstName: ".",
+                lastName: ".",
+            },
             responseMsg: "",
             responseStatus: "",
         }
@@ -343,8 +347,6 @@ class Messanger extends React.Component {
     render() {
 
 
-
-
         return (
             <FillScreen class="bg-light">
 
@@ -363,6 +365,9 @@ class Messanger extends React.Component {
 
 
                     <div className="messanger" ref={this.messangerBodyRef}>
+
+                        {/*<MessagerHeader/MessagerHeader>*/}
+                        <MessagerHeader user={this.state.otherUserProfile} isTyping={this.state.otherUserTyping}/>
 
                         <div className="messanger__messagesCont">
 

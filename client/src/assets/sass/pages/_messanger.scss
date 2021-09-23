@@ -16,7 +16,8 @@
   flex-flow: column;
   justify-content: space-between;
 
-
+  position: relative;
+  padding-top: 5rem;
 
   @media (max-width: 760px) {
     width: 100%;

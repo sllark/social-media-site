@@ -26,7 +26,7 @@ function Sidebar(props) {
         getTotalChats();
         sidebarRef.current.addEventListener('scroll', scrollPopup)
 
-        return ()=>{
+        return () => {
             // event will also get removed when element would be removed on page change
             sidebarRef.current?.removeEventListener('scroll', scrollPopup)
         }
@@ -100,17 +100,20 @@ function Sidebar(props) {
         let id = props.routerMatch.params.id;
         if (!id) return;
 
+        console.log(fetchedChats);
+
         let allChats = [...chats];
         if (fetchedChats) allChats = [...chats, ...fetchedChats];
 
         let changedIndex = allChats.findIndex(item => item._id === id);
-        if (changedIndex < 0) return;
-        let unReads = allChats[changedIndex].unRead;
+        if (changedIndex >= 0) {
+            // let unReads = allChats[changedIndex].unRead;
+            allChats[changedIndex].unRead = 0
+            updateUnreadChat();
+        }
 
-        allChats[changedIndex].unRead = 0
         setChats(allChats);
 
-        updateUnreadChat();
     }
 
 
