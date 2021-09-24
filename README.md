@@ -7,6 +7,6 @@ A page gets updated using socket if a user/friend gets online/offline or any pos
 
 The site is built with REACT, NODEJS, EXPRESS, MONGODB, SOCKET.IO, REDIS.
 
-You can check out the site here: [http://social-media-site-bay.vercel.app/](http://social-media-site-bay.vercel.app/)
+You can check out the site here: [https://social-media-site-react.vercel.app/](https://social-media-site-react.vercel.app/)
 
 
