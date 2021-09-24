@@ -77,6 +77,7 @@ function Layout(props) {
     }
 
     const newNotification = (data, eventType) => {
+
         data = {
             ...data,
             eventType

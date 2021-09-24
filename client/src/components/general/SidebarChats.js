@@ -5,6 +5,7 @@ import SidebarChatItem from "./SidebarChatItem";
 
 import useOutsideAlerter from "../../helper/useOutsideAlerter";
 import axios from "../../helper/axios";
+import getProfileDetails from "../../helper/getProfileDetails";
 
 
 function Sidebar(props) {
@@ -50,22 +51,21 @@ function Sidebar(props) {
                     changedIndex = index;
                     allChats[index].lastMessage = msg.value;
 
-
-                    // console.log(props.routerMatch.params.id, msg.to)
                     if (props.routerMatch.params.id !== msg.to &&
-                        props.routerMatch.params.id !== msg.from)
-                        allChats[index].unRead += 1
+                        props.routerMatch.params.id !== msg.from) allChats[index].unRead += 1
+
+                    if (changedIndex >= 0) { // insert at top
+                        let ele = allChats[changedIndex];
+                        allChats.splice(changedIndex, 1);
+                        allChats.splice(0, 0, ele)
+                    }
 
                 }
             })
 
-            if (changedIndex >= 0) {
-                let ele = allChats[changedIndex];
-                allChats.splice(changedIndex, 1);
-                allChats.splice(0, 0, ele)
-            }
+            if (changedIndex >= 0) setChats(allChats)
+            else addNewSidebarItem(msg);
 
-            setChats(allChats);
         }
 
     }, [props.newMessage])
@@ -116,7 +116,6 @@ function Sidebar(props) {
 
     }
 
-
     const updateUnreadChat = () => {
 
         axios.post("/updateUnreadChat",
@@ -129,8 +128,7 @@ function Sidebar(props) {
 
     }
 
-
-    let scrollPopup = () => {
+    const scrollPopup = () => {
 
         let obj = sidebarRef.current;
         if (obj
@@ -139,6 +137,24 @@ function Sidebar(props) {
             && !chatsLoading) {
             getChats(chatsRef.current.length)
         }
+
+    }
+
+    const addNewSidebarItem = async (msg) => {
+
+        let userID = msg.from;
+        if (localStorage.getItem('userID') === userID) userID = msg.to;
+
+        let otherUser = await getProfileDetails(userID);
+
+        otherUser.lastMessage = msg.value;
+        otherUser.unRead = 0;
+
+        if (props.routerMatch.params.id !== msg.to &&
+            props.routerMatch.params.id !== msg.from) otherUser.unRead += 1
+
+
+        setChats([otherUser, ...chats])
 
     }
 

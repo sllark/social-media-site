@@ -9,6 +9,7 @@ import ShowResponse from "../components/ui/ShowResponse";
 
 
 import axios from "../helper/axios";
+import getProfileDetails from "../helper/getProfileDetails";
 import handleAxiosError from "../helper/handleAxiosError";
 
 
@@ -57,9 +58,9 @@ class Messanger extends React.Component {
         if (this.props.socket) this.addSocketEvents();
 
 
-        let myID = await this.getProfileDetails(localStorage.getItem("userID"))
+        let myID = await getProfileDetails(localStorage.getItem("userID"))
         this.setState({myProfile: myID})
-        let otherID = await this.getProfileDetails(this.props.match.params.id)
+        let otherID = await getProfileDetails(this.props.match.params.id)
         this.setState({otherUserProfile: otherID})
 
 
@@ -123,25 +124,6 @@ class Messanger extends React.Component {
         this.props.socket.off('new chat message')
         this.props.socket.off('notifyTypingStart')
         this.props.socket.off('notifyTypingStop')
-    }
-
-    getProfileDetails = (profileID) => {
-        if (profileID === "") return;
-
-        return axios.get(
-            "/getProfileDetails",
-            {
-                params: {
-                    profileID: profileID
-                }
-            })
-            .then(result => {
-                return result.data.user;
-            })
-            .catch(error => {
-                handleAxiosError(error, this.setResponsePreview, "Failed to load user data...")
-            })
-
     }
 
     msgContScroll = (e) => {

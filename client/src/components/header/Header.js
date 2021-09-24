@@ -53,29 +53,35 @@ function Header(props) {
 
         if (props.notification) {
 
-            if (!props.notification?.notification?._id) return;
+
+            let notification = props.notification;
+            let eventType = notification.eventType;
+
+
+            if (!notification?.notification?._id || eventType==="reqCancel" || eventType==="reqAccepted" || eventType==="reqDeclined") return;
 
             let prevNoti = [...notifications]
 
-            let filtered = prevNoti.filter(noti => noti._id !== props.notification.notification._id)
+            let filtered = prevNoti.filter(noti => noti._id !== notification.notification._id)
 
             if (filtered.length === prevNoti.length) {
-                let newNotification = {...props.notification.notification};
+                let newNotification = {...notification.notification};
 
-                if (props.notification.personData?._id) {
-                    newNotification.person = props.notification.personData;
+                if (notification.personData?._id) {
+                    newNotification.person = notification.personData;
                 }
 
                 setNotifications([newNotification, ...notifications])
                 setTotalNotifications(totalNotifications + 1)
 
-                let type = props.notification.eventType;
+                let type = notification.eventType;
                 if (type === "postShared" || type === "req") {
-                    setResponsePreview("message", props.notification.notification.content)
+                    setResponsePreview("message", notification.notification.content)
                 }
-                setUnread([props.notification.notification])
+                setUnread([notification.notification])
 
-            } else if (filtered.length < prevNoti.length) {
+            }
+            else if (filtered.length < prevNoti.length) {
                 setNotifications(filtered)
                 setTotalNotifications(totalNotifications - (prevNoti.length - filtered.length))
                 setUnreadNotifications(prev => prev - 1)
