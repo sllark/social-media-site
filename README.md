@@ -13,5 +13,6 @@ You can check out the site here: [https://social-media-site-react.vercel.app/](h
 Demo Accounts:
 
 Email: demo1@mail.com   Password: hello123
+
 Email: demo2@mail.com   Password: hello323
 
