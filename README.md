@@ -16,3 +16,7 @@ Email: demo1@mail.com   Password: hello123
 
 Email: demo2@mail.com   Password: hello323
 
+Email: jownsnow@gmail.com   Password: passw0rd
+
+Email: abdulrehman@gmail.com   Password: passw0rd
+
