@@ -1,5 +1,8 @@
 import React, {useEffect, useRef, useState} from "react";
-import axios from "axios";
+
+import axiosInstance from "../../helper/axios";
+import {postImage} from "../../helper/postImage";
+
 
 import configs from "../../assets/config/configs";
 import Modal from "../ui/Modal";
@@ -9,14 +12,14 @@ import ImageUploader from "../general/ImageUploader";
 
 import dataURLtoFile from "../../helper/dataURLtoFile"
 import handleAxiosError from "../../helper/handleAxiosError";
-import avatar from "../../assets/img/personAvatar.svg";
+import Loading from "../ui/Loading";
 
 
 function CreateNewPost(props) {
 
 
     useEffect(() => {
-        inputEl.current.focus();
+        if (!isLoading) inputEl.current.focus();
     });
 
     const [postText, changeText] = useState("");
@@ -24,51 +27,49 @@ function CreateNewPost(props) {
     const [clearImage, setClearImage] = useState(false);
     const [cropImage, setCropImage] = useState("");
     const [imageOrignalName, setImageOriginalName] = useState("")
+    const [isLoading, setLoading] = useState(false)
 
     const inputEl = useRef(null);
 
 
-    const createPost = (e) => {
 
-        let file,
-            data = new FormData();
-        data.append('postText', postText);
+    const createPost = async (e) => {
+
+        setLoading(true)
+
+        let file = "";
+        let fileUrl = "";
 
 
         if (cropImage) {
             file = dataURLtoFile(cropImage, imageOrignalName);
-            data.append('imageFile', file);
+            fileUrl = await postImage(file, props);
         }
 
 
-        let link = configs.api_url;
-        axios({
-            method: 'post',
-            url: link + "/createPost",
-            headers: {
-                "Authorization": localStorage.getItem("token")
-            },
-            data: data
-        })
+
+        axiosInstance.post("/createPost",
+            {
+                postText: postText,
+                fileUrl: fileUrl
+            })
             .then(result => {
                 changeText("");
                 props.addNewPost(result.data.post);
                 setClearImage(true);
             })
             .catch(error => {
-                handleAxiosError(error,props.setResponsePreview,"Loading Failed...")
-
+                handleAxiosError(error, props.setResponsePreview, "Loading Failed...")
             })
-            .then(()=>{
+            .then(() => {
+                setLoading(false)
                 setShowModal(false);
             })
 
 
-
     }
 
-    let avatarSrc = "";
-    if (props.user.profilePicture) avatarSrc = configs.api_url + "/images/" + props.user.profilePicture;
+    let avatarSrc = props.user?.profilePicture || "";
 
     return (
         <>
@@ -76,7 +77,7 @@ function CreateNewPost(props) {
 
                 <div className="createNewPost__front d-flex">
 
-                    <Avatar isActive={true} url={avatarSrc || ""}/>
+                    <Avatar isActive={true} url={avatarSrc}/>
                     <input type="text"
                            value={postText}
                            placeholder={props.placeholder}
@@ -103,33 +104,42 @@ function CreateNewPost(props) {
 
             <Modal showModal={showModal} changeShowModal={setShowModal}>
                 <h2>Create Post</h2>
-                <div className="modalBody">
+                <div className={'modalBody' + (isLoading ? ' justify-content-between' : '')}>
 
                     <NameDisplay user={props.user}/>
-                    <textarea
-                        ref={inputEl}
-                        placeholder={props.placeholder}
-                        value={postText}
-                        onChange={e => {
-                            e.preventDefault();
-                            // e.target.blur();
-                            changeText(e.target.value)
-                        }}
-                    />
 
-                    <ImageUploader
-                        clearImage={clearImage}
-                        setClearImage={setClearImage}
-                        cropImage={cropImage}
-                        setCropImage={setCropImage}
-                        setImageOriginalName={setImageOriginalName}
-                    />
+                    {
+                        isLoading ?
+                            <Loading/> :
+                            <>
+                                <textarea
+                                    ref={inputEl}
+                                    placeholder={props.placeholder}
+                                    value={postText}
+                                    onChange={e => {
+                                        e.preventDefault();
+                                        // e.target.blur();
+                                        changeText(e.target.value)
+                                    }}
+                                />
+                                <ImageUploader
+                                    clearImage={clearImage}
+                                    setClearImage={setClearImage}
+                                    cropImage={cropImage}
+                                    setCropImage={setCropImage}
+                                    setImageOriginalName={setImageOriginalName}
+                                />
+                            </>
+
+                    }
+
 
                     <button
                         className="btn btn--primary"
-                        disabled={postText.length < 1}
+                        disabled={postText.length < 1 || isLoading}
                         onClick={createPost}
-                    >Post
+                    >
+                        {!isLoading ? 'Post' : 'Posting...'}
                     </button>
 
                 </div>

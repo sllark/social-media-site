@@ -10,6 +10,7 @@ const authRoutes = require('./routes/authRoutes')
 const postRoutes = require('./routes/postRoutes')
 const profileRoutes = require('./routes/profileRoutes')
 const messageRoutes = require('./routes/messageRoutes')
+const awsRoutes = require('./routes/awsRoutes')
 
 const {MOGOURI} = require('./config/keys')
 
@@ -53,6 +54,7 @@ app.use(authRoutes)
 app.use(postRoutes)
 app.use(profileRoutes)
 app.use(messageRoutes)
+app.use(awsRoutes)
 
 
 app.use((error, req, res, next) => {

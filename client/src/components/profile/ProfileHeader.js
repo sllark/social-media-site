@@ -9,9 +9,9 @@ import AddBio from "./AddBio";
 
 import dataURLtoFile from "../../helper/dataURLtoFile";
 import configs from "../../assets/config/configs";
-import axios from "axios";
 import axiosInstance from "../../helper/axios";
 import handleAxiosError from "../../helper/handleAxiosError";
+import {postImage} from "../../helper/postImage";
 
 function ProfileHeader(props) {
 
@@ -40,6 +40,8 @@ function ProfileHeader(props) {
     const [originalName, setOriginalName] = useState("");
     const [readingImage, setReadingImage] = useState("");
     const [showModal, setShowModal] = useState(false);
+
+    const [isLoading, setLoading] = useState(false);
 
 
     const imageChangeHandler = (e, imageType) => {
@@ -88,38 +90,31 @@ function ProfileHeader(props) {
     }
 
 
-    const postProfile = (imageType = "profile", imgData) => {
+    const postProfile = async (imageType = "profile", imgData) => {
 
-        let file,
-            data = new FormData();
+        setLoading(true);
 
-
-        let link = configs.api_url;
+        let file, fileUrl = "";
 
         let path = "/updateProfilePic";
-
         if (imageType === "cover") path = "/updateCoverPic";
 
-
         file = dataURLtoFile(imgData, originalName);
+        fileUrl = await postImage(file, props);
 
-        data.append('imageFile', file);
-
-
-        axios({
-            method: 'post',
-            url: link + path,
-            headers: {
-                "Authorization": localStorage.getItem("token")
-            },
-            data: data
-        })
+        axiosInstance.post(path,
+            {
+                fileUrl: fileUrl
+            })
             .then(result => {
-                console.log(result);
                 props.addNewPost(result.data.post)
             })
             .catch(error => {
                 handleAxiosError(error, props.setResponsePreview, "Failed to  update image.")
+            })
+            .then(result => {
+                setLoading(false);
+                setShowModal(false)
             })
 
     }
@@ -232,7 +227,7 @@ function ProfileHeader(props) {
             .then(result => {
                 if (result.data.message === "success")
                     props.updateUser("reqRecieved", false)
-                    props.updateUser("isMyFriend", true)
+                props.updateUser("isMyFriend", true)
             })
             .catch(error => {
                 handleAxiosError(error, props.setResponsePreview, "Could not accept request right now.")
@@ -262,31 +257,36 @@ function ProfileHeader(props) {
     }
 
 
-    let coverSrc = cropImageCover ? cropImageCover : props.user.coverPicture ?
-        (configs.api_url + "/images/" + props.user.coverPicture) : "";
-
-    let profilSrc = cropImageProfile ? cropImageProfile : props.user.profilePicture ?
-        (configs.api_url + "/images/" + props.user.profilePicture) : profile;
+    let coverSrc = cropImageCover ? cropImageCover : props.user.coverPicture;
+    let profilSrc = cropImageProfile ? cropImageProfile : props.user.profilePicture;
 
 
     let isMyProfile = props.user._id === localStorage.getItem('userID');
 
 
     let reqBtn = null;
-    if (!props.user.isMyFriend && !props.user.reqSent && !props.user.reqRecieved)
+    if (!props.user.isMyFriend && !props.user.reqSent && !props.user.reqRecieved) {
+
         reqBtn = <button className="btn btn--transparent mr-1" onClick={sendFriendReq}>Send Friend Request</button>;
-    else if (!props.user.isMyFriend && props.user.reqSent)
+
+    } else if (!props.user.isMyFriend && props.user.reqSent) {
+
         reqBtn = <button className="btn btn--transparent mr-1" onClick={cancelReq}>Cancel Request</button>;
-    else if (!props.user.isMyFriend && props.user.reqRecieved) {
+
+    } else if (!props.user.isMyFriend && props.user.reqRecieved) {
+
         reqBtn = (
             <>
                 <button className="btn btn--transparent mr-1" onClick={acceptReq}>Accept Request</button>
                 <button className="btn btn--transparent mr-1" onClick={declineReq}>Decline Request</button>
             </>)
-    } else if (props.user.isMyFriend)
+
+
+    } else if (props.user.isMyFriend) {
+
         reqBtn = <button className="btn btn--transparent mr-1"
                          onClick={unfriendUser}>Unfriend</button>;
-
+    }
 
     return (
         <>
@@ -322,6 +322,11 @@ function ProfileHeader(props) {
                                                 type="file"
                                                 id="coverInput"
                                                 className="hideInput"
+                                                onClick={(e) => {
+                                                    if (!isLoading) return;
+                                                    e.preventDefault();
+                                                    setShowModal(true);
+                                                }}
                                                 onChange={(e) => imageChangeHandler(e, "cover")}
                                                 ref={coverIputRef}
                                             />
@@ -356,6 +361,11 @@ function ProfileHeader(props) {
                                                 type="file"
                                                 id="profileInput"
                                                 className="hideInput"
+                                                onClick={(e) => {
+                                                    if (!isLoading) return;
+                                                    e.preventDefault();
+                                                    setShowModal(true);
+                                                }}
                                                 onChange={(e) => imageChangeHandler(e, "profile")}
                                                 ref={profileInputRef}
                                             />
@@ -432,6 +442,8 @@ function ProfileHeader(props) {
                 image={image}
                 setCropImage={setData}
                 isProfileCropper={readingImage === "profile"}
+                onProfilePage={readingImage === "profile" || readingImage === "cover"}
+                isLoading={isLoading}
             />
 
         </>

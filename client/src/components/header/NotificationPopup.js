@@ -4,7 +4,6 @@ import {Link} from "react-router-dom"
 
 import timeDifference from "../../helper/timeDiff";
 import Avatar from "../profile/Avatar";
-import configs from "../../assets/config/configs";
 import axios from "../../helper/axios";
 import handleAxiosError from "../../helper/handleAxiosError";
 import Loading from "../ui/Loading";
@@ -81,10 +80,7 @@ function NotificationPopup(props) {
 
                             <Link to={"/profile/" + item.person._id} onClick={() => props.showPopup(false)}>
                                 <Avatar
-                                    url={
-                                        item.person.profilePicture ?
-                                            (configs.api_url + "/images/" + item.person.profilePicture) : null
-                                    }
+                                    url={item.person?.profilePicture}
                                     roundAvatar={true}
                                 />
                             </Link>

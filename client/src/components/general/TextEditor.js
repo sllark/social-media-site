@@ -18,8 +18,7 @@ function TextEditor(props) {
 
 
     let profilePic = props?.profile?.profilePicture || "";
-    if (profilePic)
-        profilePic = configs.api_url + "/images/" + profilePic;
+
 
     return (
         <div className="textEditor d-flex">

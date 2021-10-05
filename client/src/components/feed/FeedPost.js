@@ -119,6 +119,7 @@ class FeedPost extends React.Component {
 
     likeClick = (e) => {
 
+        // TODO: Add like in modal box too
         axios.post(
             "/likePost",
             JSON.stringify({
@@ -126,6 +127,7 @@ class FeedPost extends React.Component {
             }))
             .then(result => {
 
+                console.log(result)
 
                 this.setState(
                     (prevState) => {
@@ -361,7 +363,9 @@ class FeedPost extends React.Component {
 
         let post = this.props.post;
 
-        // console.log(post)
+        // let imgUrl = post.postImage;
+        // if(imgUrl.indexOf('http')<0)
+        //     imgUrl = configs.api_url + "/images/" + post.postImage;
 
         return (
             <>
@@ -371,10 +375,7 @@ class FeedPost extends React.Component {
 
                         <div className="feedPost__header__content">
                             <Avatar
-                                url={
-                                    post.user.profilePicture ?
-                                        (configs.api_url + "/images/" + post.user.profilePicture) : null
-                                }
+                                url={post.user.profilePicture}
                                 roundAvatar={true}
                                 isActive={post.user.isOnline || post.user._id === localStorage.getItem("userID")}
                             />
@@ -425,7 +426,7 @@ class FeedPost extends React.Component {
                         {
                             post.postImage ?
                                 <img
-                                    src={configs.api_url + "/images/" + post.postImage}
+                                    src={post.postImage}
                                     alt=""
                                     onClick={this.showImage}
                                 />

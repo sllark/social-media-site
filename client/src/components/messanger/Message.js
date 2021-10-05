@@ -1,7 +1,6 @@
 import React, {useState} from "react";
 import {Link} from "react-router-dom"
 import Avatar from "../profile/Avatar";
-import configs from "../../assets/config/configs";
 
 function Message(props) {
 
@@ -22,14 +21,14 @@ function Message(props) {
 
     let profilePic = props.profile?.profilePicture;
 
-    if(profilePic)
-        profilePic = configs.api_url+"/images/"+profilePic;
+    // if(profilePic)
+    //     profilePic = configs.api_url+"/images/"+profilePic;
 
     return (
         <div className={props.msg.own ? "message own" : "message"} data-date={props.msg.createdAt}>
             <div className="message__body">
 
-                <Link to={"/profile/"+props.profile?._id}>
+                <Link to={"/profile/" + props.profile?._id}>
                     <Avatar type="sm" url={profilePic}/>
                 </Link>
                 <pre

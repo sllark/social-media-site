@@ -116,8 +116,7 @@ exports.updateProfilePic = async (req, res, next) => {
     }
 
 
-    let postImage = "";
-    if (req.file) postImage = req.file.filename
+    let postImage = req.body.fileUrl || '';
 
     if (!postImage)
         return res.status(404).json({
@@ -173,8 +172,7 @@ exports.updateCoverPic = async (req, res, next) => {
         return next(error);
     }
 
-    let postImage = "";
-    if (req.file) postImage = req.file.filename
+    let postImage = req.body.fileUrl || '';
 
     if (!postImage)
         return res.status(404).json({

@@ -12,7 +12,7 @@ function SidebarOnlineItem(props) {
     return (
         <Link className="sidebar__item" to={"/profile/" + props.item._id} onClick={()=>props.showSidebar(false)}>
 
-            <Avatar isActive={true} url={configs.api_url + "/images/" + props.item.profilePicture}/>
+            <Avatar isActive={true} url={props.item.profilePicture}/>
             <p>
                 {`${props.item.firstName} ${props.item.lastName}`}
             </p>

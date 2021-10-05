@@ -16,7 +16,7 @@ function truncateString(str, num) {
 function Person(props) {
 
     let profileUrl = "";
-    profileUrl = props.user.profilePicture ? (configs.api_url + "/images/" + props.user.profilePicture) : profile;
+    profileUrl = props.user.profilePicture || profile;
 
     return (
         <Link to={"/profile/"+props.user._id} className="person">

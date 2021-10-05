@@ -15,7 +15,7 @@ function SidebarChatItem(props) {
             to={"/messanger/" + props.item._id}
             onClick={() => props.showSidebar(false)}>
 
-            <Avatar isActive={props.item.isOnline} url={configs.api_url + "/images/" + props.item.profilePicture}/>
+            <Avatar isActive={props.item.isOnline} url={props.item?.profilePicture}/>
 
 
             <div className="sidebar__item__content">

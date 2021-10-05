@@ -25,7 +25,8 @@
         font-size: 1.8rem;
         color: $color-text;
       }
-      span{
+
+      span {
         color: $color-text-secondary;
         font-size: 1.2rem;
       }
@@ -40,4 +41,8 @@
   }
 
 
+}
+
+.justify-content-between {
+  justify-content: space-between !important;
 }

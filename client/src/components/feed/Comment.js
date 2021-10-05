@@ -27,8 +27,6 @@ function Comment(props) {
     }
 
     let profilePic = props.ele?.person?.profilePicture || "";
-    if (profilePic)
-        profilePic = configs.api_url + "/images/" + profilePic;
 
     return (
         <div className={"postComment" + (props.indent ? (" indent-" + props.indent) : "")}>

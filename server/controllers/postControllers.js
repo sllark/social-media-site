@@ -26,8 +26,7 @@ exports.createPost = async (req, res, next) => {
         return next(error);
     }
 
-    let postImage = "";
-    if (req.file) postImage = req.file.filename
+    let postImage = req.body.fileUrl || '';
 
     let newPost = new Post({
         postText: req.body.postText,
